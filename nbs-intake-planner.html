@@ -228,7 +228,8 @@
         <div class="group-head"><span class="tk gear"></span>Interview capacity</div>
         <div class="field"><label>Candidates to interview</label><input type="number" id="pCand" min="1" step="1"></div>
         <div class="field"><label>Interviews cleared / hour</label><input type="number" id="pPerHr" min="1" step="1"></div>
-        <div class="field"><label>Interview hours / day</label><input type="number" id="pHrs" min="1" step="0.5"></div>
+        <div class="field"><label>Weekday interview hours</label><input type="number" id="pHrsWD" min="1" step="0.5"></div>
+        <div class="field"><label>Weekend interview hours</label><input type="number" id="pHrsWE" min="1" step="0.5"></div>
       </div>
       <div class="group">
         <div class="group-head"><span class="tk scholar"></span>Scholar round</div>
@@ -266,7 +267,7 @@ const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov',
 const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 const DEFAULTS={
-  pCand:100, pPerHr:8, pHrs:5, pSch:30,
+  pCand:100, pPerHr:8, pHrsWD:4, pHrsWE:12, pSch:30,
   scholarClose:'2026-08-12', scholarInvite:'2026-08-13', schSep:false, scholarIv:'2026-08-15',
   genClose:'2026-08-17', genInvite:'2026-08-19',
   ivDays:['2026-08-21','2026-08-22','2026-08-24'],
@@ -277,9 +278,11 @@ let state=structuredClone(DEFAULTS);
 
 const EVENTS=[
   {date:'2026-08-03', label:'REP / Welcome Day'},
-  {date:'2026-08-03', label:'Club Fair', warm:true}
+  {date:'2026-08-03', label:'Club Fair', warm:true},
+  {date:'2026-08-13', label:'Club Fair (TBC)', warm:true},
+  {date:'2026-08-14', label:'Club Fair (TBC)', warm:true}
 ];
-const WARM=new Set(['2026-08-03']);
+const WARM=new Set(['2026-08-03','2026-08-13','2026-08-14']);
 
 // date helpers
 const pad=n=>String(n).padStart(2,'0');
@@ -302,7 +305,7 @@ function chips(){
     {id:'dinner', date:state.dinner, label:'Welcome Dinner', track:'deadline'}
   ];
   if(state.schSep) list.push({id:'scholarIv', date:state.scholarIv, label:'Scholar interviews', track:'scholar'});
-  state.ivDays.forEach((d,i)=>list.push({id:'iv:'+i, date:d, label:'Interview', track:'interview'}));
+  state.ivDays.forEach((d,i)=>list.push({id:'iv:'+i, date:d, label:`Interview · ${isWE(d)?state.pHrsWE:state.pHrsWD}h`, track:'interview'}));
   state.infoSessions.forEach((s,i)=>list.push({id:'info:'+i, date:s.date, label:s.label, track:'event'}));
   return list;
 }
@@ -396,13 +399,16 @@ function onUp(e){
 // ---------- capacity ----------
 function renderCapacity(){
   const m=model(); const box=$('capBox'); box.innerHTML='';
-  const slotsPerDay=m.pPerHr*m.pHrs, genDays=m.iv.length;
+  const genDays=m.iv.length;
+  const daySlots=m.iv.map(d=>m.pPerHr*(isWE(d)?m.pHrsWE:m.pHrsWD));
+  const capacity=daySlots.reduce((s,x)=>s+x,0);
   let load, subline='';
   if(m.schSep){
     load=Math.max(0,m.pCand-m.pSch);
-    subline=`Scholar day: ${m.pSch} candidates vs ${slotsPerDay} slots (${m.pHrs} h × ${m.pPerHr}/h). General days carry the ${load} below.`;
+    const schHrs=isWE(m.firstScholarIv)?m.pHrsWE:m.pHrsWD;
+    const schSlots=m.pPerHr*schHrs;
+    subline=`Scholar day: ${m.pSch} candidates vs ${schSlots} slots (${schHrs} h × ${m.pPerHr}/h). General days carry the ${load} below.`;
   } else load=m.pCand;
-  const capacity=genDays*slotsPerDay;
   const slack=capacity-load;
   const hoursNeeded=(genDays>0&&m.pPerHr>0)?load/(m.pPerHr*genDays):0;
   const st=slack<0?'bad':(slack<load*0.12?'warn':'good');
@@ -414,8 +420,8 @@ function renderCapacity(){
       <span class="cap-stat">${load} need · ${capacity} capacity · ${genDays} day${genDays!==1?'s':''}</span></div>
     <div class="cap-bar"><div class="fill" style="width:${pctUsed}%;background:${col}"></div><div class="need" style="left:${pctUsed}%"></div></div>
     <div><div class="cap-note">${st==='bad'
-      ? `You'd need about <b>${hoursNeeded.toFixed(1)} h/day</b> across ${genDays} day${genDays!==1?'s':''} — more than the ${m.pHrs} h set. Add a day, trim the shortlist, or raise the hours.`
-      : `About <b>${hoursNeeded.toFixed(1)} h of interviewing per day</b> clears the load across ${genDays} day${genDays!==1?'s':''}, against the ${m.pHrs} h budgeted.`}</div>
+      ? `You'd need about <b>${hoursNeeded.toFixed(1)} h/day avg</b> across ${genDays} day${genDays!==1?'s':''} — more than the ${m.pHrsWD} h (weekday) / ${m.pHrsWE} h (weekend) set. Add a day, trim the shortlist, or raise the hours.`
+      : `About <b>${hoursNeeded.toFixed(1)} h avg per day</b> clears the load across ${genDays} day${genDays!==1?'s':''} (weekdays: ${m.pHrsWD} h, weekends: ${m.pHrsWE} h).`}</div>
       ${subline?`<div class="cap-sub">${subline}</div>`:''}</div>`;
 }
 
@@ -483,7 +489,7 @@ function renderDeadline(){
 
 // ---------- inputs sync ----------
 const DATE_FIELDS=['scholarClose','scholarInvite','scholarIv','genClose','genInvite','results','dinner'];
-const NUM_FIELDS=[['pCand','pCand'],['pPerHr','pPerHr'],['pHrs','pHrs'],['pSch','pSch']];
+const NUM_FIELDS=[['pCand','pCand'],['pPerHr','pPerHr'],['pHrsWD','pHrsWD'],['pHrsWE','pHrsWE'],['pSch','pSch']];
 function syncInputs(){
   const af=document.activeElement;
   NUM_FIELDS.forEach(([id,key])=>{ if($(id)!==af) $(id).value=state[key]; });
@@ -526,7 +532,7 @@ function syncInfoRows(){
 // ---------- URL state ----------
 function encodeState(s){
   const compact={
-    c:s.pCand,p:s.pPerHr,h:s.pHrs,sc:s.pSch,
+    c:s.pCand,p:s.pPerHr,hWD:s.pHrsWD,hWE:s.pHrsWE,sc:s.pSch,
     sC:s.scholarClose,sI:s.scholarInvite,sep:s.schSep?1:0,sV:s.scholarIv,
     gC:s.genClose,gI:s.genInvite,
     iv:s.ivDays,
@@ -541,7 +547,7 @@ function decodeState(hash){
     const obj=JSON.parse(decodeURIComponent(escape(atob(raw))));
     return {
       pCand:obj.c??DEFAULTS.pCand, pPerHr:obj.p??DEFAULTS.pPerHr,
-      pHrs:obj.h??DEFAULTS.pHrs, pSch:obj.sc??DEFAULTS.pSch,
+      pHrsWD:obj.hWD??obj.h??DEFAULTS.pHrsWD, pHrsWE:obj.hWE??DEFAULTS.pHrsWE, pSch:obj.sc??DEFAULTS.pSch,
       scholarClose:obj.sC??DEFAULTS.scholarClose,
       scholarInvite:obj.sI??DEFAULTS.scholarInvite,
       schSep:obj.sep===1, scholarIv:obj.sV??DEFAULTS.scholarIv,
