@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NBS Intake Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --canvas:#E9EDF2; --paper:#FFFFFF;
+    --ink:#15191F; --ink-soft:#5C6573; --ink-faint:#94A0B0;
+    --line:#D7DDE6; --line-soft:#E9EDF2;
+    --accent:#2B4DD9; --accent-soft:#E6EAFB;
+    --good:#1C9B55; --good-soft:#E1F3E9;
+    --warn:#BE7D08; --warn-soft:#FAEFD5;
+    --bad:#CF3838; --bad-soft:#FAE2E2;
+    --scholar:#7A3FB5; --scholar-soft:#EFE6F8;
+    --general:#0E7C7B; --general-soft:#DDF1F0;
+    --display:'Space Grotesk',ui-sans-serif,system-ui,'Segoe UI',sans-serif;
+    --body:'Inter',ui-sans-serif,system-ui,'Segoe UI',sans-serif;
+    --mono:'Space Mono',ui-monospace,'SF Mono',Menlo,monospace;
+    --radius:10px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--canvas);color:var(--ink);font-family:var(--body);line-height:1.5;-webkit-font-smoothing:antialiased;padding:24px 16px 64px}
+  .wrap{max-width:1240px;margin:0 auto}
+
+  .masthead{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin:0 0 6px}
+  h1{font-family:var(--display);font-weight:700;font-size:clamp(26px,4.4vw,40px);letter-spacing:-.02em;margin:0;line-height:1.02}
+  .sub{color:var(--ink-soft);font-size:14px;margin:8px 0 0;max-width:50ch}
+  .head-right{display:flex;gap:12px;align-items:flex-end}
+  .deadline-chip{background:var(--ink);color:#fff;border-radius:var(--radius);padding:12px 16px;text-align:right;font-family:var(--mono);display:flex;flex-direction:column;gap:2px;min-width:150px}
+  .deadline-chip .lab{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint)}
+  .deadline-chip .big{font-size:24px;font-weight:700;line-height:1.05}
+  .deadline-chip .small{font-size:12px;color:#C9D2DF}
+  .btn-reset{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;background:transparent;border:1px solid var(--line);color:var(--ink-soft);border-radius:7px;padding:8px 12px;transition:.15s}
+  .btn-reset:hover{border-color:var(--ink);color:var(--ink)}
+  .btn-share{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;background:var(--accent);border:none;color:#fff;border-radius:7px;padding:8px 14px;transition:.15s;display:flex;align-items:center;gap:7px}
+  .btn-share:hover{filter:brightness(1.12)}
+  .btn-share svg{flex-shrink:0}
+  .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-family:var(--mono);font-size:12px;letter-spacing:.06em;padding:10px 18px;border-radius:30px;pointer-events:none;opacity:0;transition:opacity .2s,transform .2s;z-index:10000;white-space:nowrap}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* ---------- calendar ---------- */
+  .cal-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:20px 20px 16px;margin-bottom:18px}
+  .cal-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .cal-month{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:-.01em;margin:0}
+  .cal-month span{color:var(--ink-faint);font-weight:500}
+  .cal-hint{font-size:12.5px;color:var(--ink-soft)}
+  .cal-hint b{color:var(--accent)}
+  .cal-scroll{overflow-x:auto}
+  .cal{min-width:840px}
+  .cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-bottom:7px}
+  .cal-weekdays div{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);text-align:center;padding:2px 0}
+  .cal-weekdays div.we{color:var(--ink-soft)}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+  .cal-cell{min-height:112px;border:1px solid var(--line);border-radius:9px;padding:7px 7px 8px;background:var(--paper);position:relative;transition:box-shadow .12s,border-color .12s,background .12s}
+  .cal-cell.blank{background:transparent;border:1px dashed var(--line-soft)}
+  .cal-cell.we{background:#F1F4F8}
+  .cal-cell.warm{background:var(--warn-soft);border-color:#EAD9A8}
+  .cal-cell.drop-hover{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 2px var(--accent)}
+  .cal-daynum{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink-soft);display:block;margin-bottom:3px}
+  .cal-cell.we .cal-daynum{color:var(--ink-faint)}
+
+  .chip{display:block;font-size:11px;font-weight:600;padding:4px 7px;border-radius:6px;margin-top:5px;cursor:grab;line-height:1.18;border-left:3px solid;touch-action:none;user-select:none;-webkit-user-select:none;position:relative}
+  .chip:hover{filter:brightness(.97)}
+  .chip:active{cursor:grabbing}
+  .chip[data-track=scholar]{background:var(--scholar-soft);color:var(--scholar);border-color:var(--scholar)}
+  .chip[data-track=general]{background:var(--general-soft);color:var(--general);border-color:var(--general)}
+  .chip[data-track=interview]{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+  .chip[data-track=results]{background:#EEF0F3;color:var(--ink);border-color:var(--ink-soft)}
+  .chip[data-track=deadline]{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+  .chip[data-track=event]{background:#EEF2F6;color:#475569;border-color:#64748B}
+  .chip.dragging-src{opacity:.35}
+  .chip .grip{font-family:var(--mono);opacity:.5;margin-right:3px}
+  .echip{font-size:10px;color:var(--ink-soft);background:transparent;border:1px dashed var(--line);border-radius:6px;padding:3px 6px;margin-top:5px;line-height:1.18}
+  .echip.warm{border-color:var(--warn);color:var(--warn);background:rgba(255,255,255,.4)}
+  .ghost{position:fixed;z-index:9999;pointer-events:none;box-shadow:0 8px 24px rgba(20,30,60,.28);transform:rotate(-1.5deg) scale(1.04);opacity:.96}
+
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line-soft)}
+  .legend span{font-size:11px;color:var(--ink-soft);display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);letter-spacing:.03em}
+  .legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+  /* ---------- body grid ---------- */
+  .grid{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+  .panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+  .card-label{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 14px;display:flex;align-items:center;gap:10px}
+  .card-label::after{content:"";flex:1;height:1px;background:var(--line-soft)}
+
+  /* capacity */
+  .cap{display:flex;flex-direction:column;gap:12px;margin-bottom:24px}
+  .cap-line{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .cap-verdict{font-family:var(--display);font-weight:600;font-size:15px}
+  .cap-stat{font-family:var(--mono);font-size:12px;color:var(--ink-soft)}
+  .cap-bar{height:10px;border-radius:6px;background:var(--line-soft);overflow:hidden;position:relative}
+  .cap-bar .fill{height:100%;border-radius:6px;transition:width .25s}
+  .cap-bar .need{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink)}
+  .cap-note{font-size:12.5px;color:var(--ink-soft)}
+  .cap-sub{font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-top:2px}
+
+  /* buffers */
+  .gaps-head{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 4px}
+  .gaps-sub{font-size:12.5px;color:var(--ink-soft);margin:0 0 14px}
+  .gap{padding:13px 0;border-bottom:1px solid var(--line-soft)}
+  .gap:last-child{border-bottom:none;padding-bottom:0}
+  .gap-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:9px}
+  .gap-name{font-size:13.5px;font-weight:600}
+  .gap-name .ends{font-family:var(--mono);font-size:10.5px;font-weight:400;color:var(--ink-faint);display:block;margin-top:1px}
+  .gap-chip{font-family:var(--mono);font-size:12px;font-weight:700;padding:4px 9px;border-radius:20px;white-space:nowrap}
+  .caliper{display:flex;align-items:center;margin:0 0 9px;height:14px}
+  .caliper .tick{width:2px;height:14px;border-radius:1px}
+  .caliper .span{flex:1;height:2px;position:relative}
+  .caliper .span::after{content:"";position:absolute;inset:0;border-radius:2px}
+  .gap-note{font-size:12.5px;line-height:1.45;color:var(--ink-soft)}
+  .gap[data-st=good] .gap-chip{background:var(--good-soft);color:var(--good)} .gap[data-st=good] .tick{background:var(--good)} .gap[data-st=good] .span::after{background:var(--good)}
+  .gap[data-st=warn] .gap-chip{background:var(--warn-soft);color:var(--warn)} .gap[data-st=warn] .tick{background:var(--warn)} .gap[data-st=warn] .span::after{background:var(--warn)}
+  .gap[data-st=bad] .gap-chip{background:var(--bad-soft);color:var(--bad)} .gap[data-st=bad] .tick{background:var(--bad)} .gap[data-st=bad] .span::after{background:var(--bad)}
+
+  .conflicts{margin-top:18px}
+  .conflict{display:flex;gap:9px;align-items:flex-start;background:var(--bad-soft);border-radius:8px;padding:10px 12px;margin-top:8px;font-size:12.5px;color:#8f2525}
+  .conflict b{color:var(--bad)}
+  .all-clear{font-family:var(--mono);font-size:12px;color:var(--good);background:var(--good-soft);border-radius:8px;padding:10px 12px;margin-top:8px;display:flex;align-items:center;gap:8px}
+
+  /* controls */
+  .group{margin-bottom:20px}
+  .group-head{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:600;font-size:14px;margin:0 0 10px}
+  .group-head .tk{width:9px;height:9px;border-radius:50%}
+  .tk.scholar{background:var(--scholar)} .tk.general{background:var(--general)} .tk.shared{background:var(--accent)} .tk.gear{background:var(--ink-soft)} .tk.event{background:#64748B}
+  .field{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+  .field label{font-size:13px;color:var(--ink-soft)}
+  .field input{font-family:var(--mono);font-size:13px;color:var(--ink);background:var(--canvas);border:1px solid var(--line);border-radius:7px;padding:7px 9px;transition:.15s}
+  .field input[type=number]{width:84px;text-align:right}
+  .field input[type=date]{width:150px}
+  .field input:focus{outline:none;border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-soft)}
+  .field .dow{font-family:var(--mono);font-size:11px;color:var(--ink-faint);width:30px;text-align:right;flex-shrink:0}
+  .iv-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .iv-row .dow{font-family:var(--mono);font-size:11px;color:var(--ink-faint);width:30px}
+  .iv-row input[type=date]{font-family:var(--mono);font-size:13px;background:var(--canvas);border:1px solid var(--line);border-radius:7px;padding:7px 9px;flex:1;color:var(--ink)}
+  .iv-row input:focus{outline:none;border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-soft)}
+  .iv-x{border:none;background:transparent;color:var(--ink-faint);cursor:pointer;font-size:18px;line-height:1;padding:2px 6px;border-radius:5px}
+  .iv-x:hover{color:var(--bad);background:var(--bad-soft)}
+  .iv-add{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);border:none;border-radius:7px;padding:9px 10px;cursor:pointer;width:100%}
+  .iv-add:hover{filter:brightness(.96)}
+  .info-row{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--line-soft)}
+  .info-row:last-of-type{border-bottom:none;margin-bottom:8px}
+  .info-label{width:100%;font-family:var(--body);font-size:13px;color:var(--ink);background:var(--canvas);border:1px solid var(--line);border-radius:7px;padding:7px 9px;margin-bottom:7px}
+  .info-label:focus{outline:none;border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-soft)}
+  .info-line{display:flex;align-items:center;gap:8px}
+  .info-line .dow{font-family:var(--mono);font-size:11px;color:var(--ink-faint);width:30px}
+  .info-line .info-date{font-family:var(--mono);font-size:13px;background:var(--canvas);border:1px solid var(--line);border-radius:7px;padding:7px 9px;flex:1;color:var(--ink)}
+  .info-line .info-date:focus{outline:none;border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-soft)}
+  .toggle{display:flex;align-items:center;gap:9px;margin:2px 0 12px;cursor:pointer;font-size:13px;color:var(--ink-soft)}
+  .toggle input{width:16px;height:16px;accent-color:var(--scholar)}
+  details{margin-top:6px;border-top:1px solid var(--line-soft);padding-top:12px}
+  summary{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);cursor:pointer;margin-bottom:10px}
+  .hidden{display:none}
+
+  @media (max-width:920px){ .grid{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div>
+      <p class="eyebrow">NTU Business Solutions · Intake Planning</p>
+      <h1>Recruitment Timeline Planner</h1>
+      <p class="sub">Drag any milestone to a different day. The buffers below recolour live so you can see where the schedule leaves too little room to react.</p>
+    </div>
+    <div class="head-right">
+      <button class="btn-reset" id="resetBtn">Reset</button>
+      <button class="btn-share" id="shareBtn">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="2.5" r="1.5"/><circle cx="13" cy="13.5" r="1.5"/><circle cx="2.5" cy="8" r="1.5"/><line x1="4" y1="8" x2="11.5" y2="3.2"/><line x1="4" y1="8" x2="11.5" y2="12.8"/></svg>
+        Copy shareable link
+      </button>
+      <div class="deadline-chip">
+        <span class="lab">Hard deadline</span>
+        <span class="big" id="ddDate">—</span>
+        <span class="small" id="ddLabel">Welcome Dinner</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- big calendar -->
+  <section class="cal-card">
+    <div class="cal-top">
+      <h2 class="cal-month">August <span>2026</span></h2>
+      <p class="cal-hint"><b>Drag</b> the coloured chips onto any day to reschedule. Dashed chips are fixed events.</p>
+    </div>
+    <div class="cal-scroll">
+      <div class="cal">
+        <div class="cal-weekdays">
+          <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div class="we">Sat</div>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--scholar)"></i>Scholar round</span>
+      <span><i style="background:var(--general)"></i>General round</span>
+      <span><i style="background:var(--accent)"></i>Interviews</span>
+      <span><i style="background:var(--bad)"></i>Deadline</span>
+      <span><i style="background:#64748B"></i>Info session (drag to move)</span>
+      <span><i style="background:var(--warn)"></i>Club Fair</span>
+    </div>
+  </section>
+
+  <div class="grid">
+    <!-- analysis -->
+    <section class="panel">
+      <p class="card-label">Capacity check</p>
+      <div class="cap" id="capBox"></div>
+
+      <p class="gaps-head">Breathing room between steps</p>
+      <p class="gaps-sub">Each bar is the gap you have to absorb delays, no-shows, and rejections. Keep the late-stage ones out of the red.</p>
+      <div id="gaps"></div>
+      <div class="conflicts" id="conflicts"></div>
+    </section>
+
+    <!-- controls -->
+    <section class="panel">
+      <p class="card-label">Adjust</p>
+      <div class="group">
+        <div class="group-head"><span class="tk gear"></span>Interview capacity</div>
+        <div class="field"><label>Candidates to interview</label><input type="number" id="pCand" min="1" step="1"></div>
+        <div class="field"><label>Interviews cleared / hour</label><input type="number" id="pPerHr" min="1" step="1"></div>
+        <div class="field"><label>Interview hours / day</label><input type="number" id="pHrs" min="1" step="0.5"></div>
+      </div>
+      <div class="group">
+        <div class="group-head"><span class="tk scholar"></span>Scholar round</div>
+        <label class="toggle"><input type="checkbox" id="schSep">Interview scholars on their own earlier day</label>
+        <div id="schSepBox" class="hidden">
+          <div class="field"><label>How many scholars</label><input type="number" id="pSch" min="0" step="1"></div>
+        </div>
+      </div>
+      <div class="group">
+        <div class="group-head"><span class="tk shared"></span>Interview days</div>
+        <div id="ivDays"></div>
+        <button class="iv-add" id="ivAdd">+ add an interview day</button>
+      </div>
+      <div class="group">
+        <div class="group-head"><span class="tk event"></span>Info sessions</div>
+        <div id="infoList"></div>
+        <button class="iv-add" id="infoAdd">+ add info session</button>
+      </div>
+      <details>
+        <summary>Set dates by typing</summary>
+        <div class="field"><label>Scholar close</label><span class="dow" id="d_scholarClose"></span><input type="date" id="scholarClose"></div>
+        <div class="field"><label>Scholar invites</label><span class="dow" id="d_scholarInvite"></span><input type="date" id="scholarInvite"></div>
+        <div class="field hidden" id="schIvField"><label>Scholar interviews</label><span class="dow" id="d_scholarIv"></span><input type="date" id="scholarIv"></div>
+        <div class="field"><label>General close</label><span class="dow" id="d_genClose"></span><input type="date" id="genClose"></div>
+        <div class="field"><label>General invites</label><span class="dow" id="d_genInvite"></span><input type="date" id="genInvite"></div>
+        <div class="field"><label>Results</label><span class="dow" id="d_results"></span><input type="date" id="results"></div>
+        <div class="field"><label>Welcome Dinner</label><span class="dow" id="d_dinner"></span><input type="date" id="dinner"></div>
+      </details>
+    </section>
+  </div>
+</div>
+
+<script>
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+const DEFAULTS={
+  pCand:100, pPerHr:8, pHrs:5, pSch:30,
+  scholarClose:'2026-08-12', scholarInvite:'2026-08-13', schSep:false, scholarIv:'2026-08-15',
+  genClose:'2026-08-17', genInvite:'2026-08-19',
+  ivDays:['2026-08-21','2026-08-22','2026-08-24'],
+  infoSessions:[{label:'Info Session (physical)',date:'2026-08-07'},{label:'Info Session (online)',date:'2026-08-14'}],
+  results:'2026-08-25', dinner:'2026-08-28'
+};
+let state=structuredClone(DEFAULTS);
+
+const EVENTS=[
+  {date:'2026-08-03', label:'REP / Welcome Day'},
+  {date:'2026-08-03', label:'Club Fair', warm:true}
+];
+const WARM=new Set(['2026-08-03']);
+
+// date helpers
+const pad=n=>String(n).padStart(2,'0');
+const pd=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d,12,0,0);};
+const diff=(a,b)=>Math.round((pd(a)-pd(b))/86400000);
+const dow=s=>DOW[pd(s).getDay()];
+const isWE=s=>{const g=pd(s).getDay();return g===0||g===6;};
+const fmtShort=s=>dow(s)+' '+pd(s).getDate()+' '+MONTHS[pd(s).getMonth()];
+const addDays=(s,n)=>{const t=pd(s);t.setDate(t.getDate()+n);return t.getFullYear()+'-'+pad(t.getMonth()+1)+'-'+pad(t.getDate());};
+const $=id=>document.getElementById(id);
+
+// milestone chips
+function chips(){
+  const list=[
+    {id:'scholarClose', date:state.scholarClose, label:'Scholar close', track:'scholar'},
+    {id:'scholarInvite', date:state.scholarInvite, label:'Scholar invites', track:'scholar'},
+    {id:'genClose', date:state.genClose, label:'General close', track:'general'},
+    {id:'genInvite', date:state.genInvite, label:'General invites', track:'general'},
+    {id:'results', date:state.results, label:'Results', track:'results'},
+    {id:'dinner', date:state.dinner, label:'Welcome Dinner', track:'deadline'}
+  ];
+  if(state.schSep) list.push({id:'scholarIv', date:state.scholarIv, label:'Scholar interviews', track:'scholar'});
+  state.ivDays.forEach((d,i)=>list.push({id:'iv:'+i, date:d, label:'Interview', track:'interview'}));
+  state.infoSessions.forEach((s,i)=>list.push({id:'info:'+i, date:s.date, label:s.label, track:'event'}));
+  return list;
+}
+function setDate(id,date){
+  if(id.startsWith('iv:')) state.ivDays[+id.slice(3)]=date;
+  else if(id.startsWith('info:')) state.infoSessions[+id.slice(5)].date=date;
+  else state[id]=date;
+}
+
+// model for analysis
+function model(){
+  const iv=[...state.ivDays].sort();
+  const m={...state, iv};
+  m.firstIv=iv[0]; m.lastIv=iv[iv.length-1];
+  m.firstScholarIv=state.schSep?state.scholarIv:m.firstIv;
+  m.lastInterview=state.schSep?(diff(state.scholarIv,m.lastIv)>0?state.scholarIv:m.lastIv):m.lastIv;
+  return m;
+}
+
+// ---------- calendar ----------
+function buildCalendar(){
+  const grid=$('calGrid'); grid.innerHTML='';
+  const lead=new Date(2026,7,1).getDay(); // 6
+  const cellChips=chips();
+  let cells=[];
+  for(let i=0;i<lead;i++) cells.push(null);
+  for(let d=1;d<=31;d++) cells.push(d);
+  while(cells.length%7!==0) cells.push(null);
+
+  cells.forEach(d=>{
+    const cell=document.createElement('div');
+    if(d===null){ cell.className='cal-cell blank'; grid.appendChild(cell); return; }
+    const date='2026-08-'+pad(d);
+    cell.className='cal-cell'+(isWE(date)?' we':'')+(WARM.has(date)?' warm':'');
+    cell.dataset.date=date;
+    cell.innerHTML=`<span class="cal-daynum">${d}</span>`;
+    // fixed events first
+    EVENTS.filter(e=>e.date===date).forEach(e=>{
+      const ec=document.createElement('div'); ec.className='echip'+(e.warm?' warm':''); ec.textContent=e.label; cell.appendChild(ec);
+    });
+    // draggable milestones
+    cellChips.filter(c=>c.date===date).forEach(c=>{
+      const ch=document.createElement('div');
+      ch.className='chip'; ch.dataset.track=c.track; ch.dataset.mid=c.id;
+      ch.title=c.label+' — '+fmtShort(date)+'  (drag to move)';
+      ch.innerHTML=`<span class="grip">⠿</span>${c.label}`;
+      ch.addEventListener('pointerdown',e=>startDrag(e,ch));
+      cell.appendChild(ch);
+    });
+    grid.appendChild(cell);
+  });
+}
+
+// ---------- pointer drag ----------
+let drag=null;
+function startDrag(e,ch){
+  if(e.button!==undefined && e.button!==0) return;
+  e.preventDefault();
+  const r=ch.getBoundingClientRect();
+  const ghost=ch.cloneNode(true);
+  ghost.classList.add('ghost'); ghost.style.width=r.width+'px';
+  document.body.appendChild(ghost);
+  ch.classList.add('dragging-src');
+  drag={mid:ch.dataset.mid, ghost, ox:e.clientX-r.left, oy:e.clientY-r.top, src:ch};
+  moveGhost(e.clientX,e.clientY);
+  document.addEventListener('pointermove',onMove,{passive:false});
+  document.addEventListener('pointerup',onUp);
+}
+function moveGhost(x,y){ drag.ghost.style.left=(x-drag.ox)+'px'; drag.ghost.style.top=(y-drag.oy)+'px'; }
+function cellUnder(x,y){ const el=document.elementFromPoint(x,y); return el?el.closest('.cal-cell[data-date]'):null; }
+function onMove(e){
+  if(!drag) return;
+  e.preventDefault();
+  moveGhost(e.clientX,e.clientY);
+  document.querySelectorAll('.cal-cell.drop-hover').forEach(c=>c.classList.remove('drop-hover'));
+  const cell=cellUnder(e.clientX,e.clientY);
+  if(cell) cell.classList.add('drop-hover');
+}
+function onUp(e){
+  if(!drag) return;
+  const cell=cellUnder(e.clientX,e.clientY);
+  if(cell) setDate(drag.mid, cell.dataset.date);
+  drag.ghost.remove();
+  document.querySelectorAll('.drop-hover').forEach(c=>c.classList.remove('drop-hover'));
+  document.removeEventListener('pointermove',onMove);
+  document.removeEventListener('pointerup',onUp);
+  drag=null;
+  renderDerived();
+}
+
+// ---------- capacity ----------
+function renderCapacity(){
+  const m=model(); const box=$('capBox'); box.innerHTML='';
+  const slotsPerDay=m.pPerHr*m.pHrs, genDays=m.iv.length;
+  let load, subline='';
+  if(m.schSep){
+    load=Math.max(0,m.pCand-m.pSch);
+    subline=`Scholar day: ${m.pSch} candidates vs ${slotsPerDay} slots (${m.pHrs} h × ${m.pPerHr}/h). General days carry the ${load} below.`;
+  } else load=m.pCand;
+  const capacity=genDays*slotsPerDay;
+  const slack=capacity-load;
+  const hoursNeeded=(genDays>0&&m.pPerHr>0)?load/(m.pPerHr*genDays):0;
+  const st=slack<0?'bad':(slack<load*0.12?'warn':'good');
+  const col=st==='bad'?'var(--bad)':st==='warn'?'var(--warn)':'var(--good)';
+  const verdict=st==='bad'?`Short by ${Math.abs(slack)} slots`:st==='warn'?'Just enough — no slack':'Fits with room to spare';
+  const pctUsed=capacity>0?Math.min(100,load/capacity*100):100;
+  box.innerHTML=`
+    <div class="cap-line"><span class="cap-verdict" style="color:${col}">${verdict}</span>
+      <span class="cap-stat">${load} need · ${capacity} capacity · ${genDays} day${genDays!==1?'s':''}</span></div>
+    <div class="cap-bar"><div class="fill" style="width:${pctUsed}%;background:${col}"></div><div class="need" style="left:${pctUsed}%"></div></div>
+    <div><div class="cap-note">${st==='bad'
+      ? `You'd need about <b>${hoursNeeded.toFixed(1)} h/day</b> across ${genDays} day${genDays!==1?'s':''} — more than the ${m.pHrs} h set. Add a day, trim the shortlist, or raise the hours.`
+      : `About <b>${hoursNeeded.toFixed(1)} h of interviewing per day</b> clears the load across ${genDays} day${genDays!==1?'s':''}, against the ${m.pHrs} h budgeted.`}</div>
+      ${subline?`<div class="cap-sub">${subline}</div>`:''}</div>`;
+}
+
+// ---------- buffers ----------
+function gapRow(name,ends,from,to,fn){
+  const d=diff(to,from); const [st,note]=fn(d);
+  const label=(d===1||d===-1)?d+' day':d+' days';
+  return `<div class="gap" data-st="${st}"><div class="gap-top">
+      <div class="gap-name">${name}<span class="ends">${ends}</span></div>
+      <span class="gap-chip">${label}</span></div>
+    <div class="caliper"><span class="tick"></span><span class="span"></span><span class="tick"></span></div>
+    <div class="gap-note">${note}</div></div>`;
+}
+function renderGaps(){
+  const m=model(); const rows=[];
+  rows.push(gapRow('Scholar close → invites','Screening window (the all-nighter)',m.scholarClose,m.scholarInvite,
+    d=> d<=0?['bad','No time booked to screen scholar applications before invites go out.']
+      : d===1?['warn','The all-nighter: doable, but zero margin if screening runs long.']
+      : ['good','Comfortable window to screen the scholar pool.']));
+  if(m.schSep) rows.push(gapRow('Scholar invites → interview','Notice given to scholars',m.scholarInvite,m.scholarIv,
+    d=> d<2?['bad','Under 2 days to prep a case interview or shift their schedule.']
+      : d<=3?['warn','Short notice for a case interview; 4–5 days is kinder.']
+      : d<=8?['good','Healthy notice, and keeps the scholar round moving fast.']
+      : ['warn','Long wait after an early deadline — scholars may commit to other clubs before they hear back.']));
+  rows.push(gapRow('General close → invites','Screening window',m.genClose,m.genInvite,
+    d=> d<=0?['bad','No room to screen general applicants before inviting.']
+      : d===1?['warn','One day to screen and send every invite — tight.']
+      : ['good','Enough room to screen and send invites.']));
+  rows.push(gapRow('General invites → first interview','Notice given to general applicants',m.genInvite,m.firstIv,
+    d=> d<2?['bad','Under 2 days to prep a case interview.']
+      : d<3?['warn','Two days’ notice — workable, but tight for case prep.']
+      : ['good','Reasonable notice to prep and reschedule around classes.']));
+  rows.push(gapRow('Last interview → results','Deliberation & writing offers',m.lastInterview,m.results,
+    d=> d<0?['bad','Results are dated before interviews finish.']
+      : d===0?['warn','Same-day results — no time to deliberate or compare candidates.']
+      : d===1?['warn','One day to deliberate and draft offers — tight.']
+      : ['good','Room to deliberate and write up offers.']));
+  rows.push(gapRow('Results → Welcome Dinner','Acceptances + backup wave',m.results,m.dinner,
+    d=> d<2?['bad','Almost no room: a top pick declining now leaves the backup no time to respond before the dinner.']
+      : d<=3?['warn','Tight for a backup wave — one late decline and you’re out of runway.']
+      : d<=5?['good','Room to run offers, acceptances, and a backup wave.']
+      : ['good','Plenty of slack before the deadline.']));
+  $('gaps').innerHTML=rows.join('');
+}
+
+// ---------- conflicts ----------
+function renderConflicts(){
+  const m=model(); const out=[];
+  const add=msg=>out.push(`<div class="conflict"><b>!</b><div>${msg}</div></div>`);
+  if(diff(m.scholarInvite,m.scholarClose)<0) add('Scholar invites are dated <b>before</b> scholar applications close.');
+  if(diff(m.genInvite,m.genClose)<0) add('General invites are dated <b>before</b> general applications close.');
+  if(diff(m.firstIv,m.genClose)<0) add('A general interview is scheduled <b>before</b> general applications close — you’d be interviewing applicants you haven’t received yet.');
+  if(m.schSep && diff(m.scholarIv,m.scholarInvite)<0) add('The scholar interview is <b>before</b> scholar invites go out.');
+  if(diff(m.results,m.lastInterview)<0) add('Results are dated <b>before</b> the last interview.');
+  if(diff(m.dinner,m.results)<0) add('The Welcome Dinner is <b>before</b> results are announced.');
+  if(diff(m.genClose,m.scholarClose)<0) add('The general round closes <b>before</b> the scholar round — the scholar round is meant to be earlier.');
+  $('conflicts').innerHTML = out.length?out.join('') : `<div class="all-clear">✓ No ordering conflicts — every step lands after the one it depends on.</div>`;
+}
+
+// ---------- deadline chip ----------
+function renderDeadline(){
+  $('ddDate').textContent=pd(state.dinner).getDate()+' '+MONTHS[pd(state.dinner).getMonth()];
+  $('ddLabel').textContent=dow(state.dinner)+' · Welcome Dinner';
+}
+
+// ---------- inputs sync ----------
+const DATE_FIELDS=['scholarClose','scholarInvite','scholarIv','genClose','genInvite','results','dinner'];
+const NUM_FIELDS=[['pCand','pCand'],['pPerHr','pPerHr'],['pHrs','pHrs'],['pSch','pSch']];
+function syncInputs(){
+  const af=document.activeElement;
+  NUM_FIELDS.forEach(([id,key])=>{ if($(id)!==af) $(id).value=state[key]; });
+  $('schSep').checked=state.schSep;
+  $('schSepBox').classList.toggle('hidden',!state.schSep);
+  $('schIvField').classList.toggle('hidden',!state.schSep);
+  DATE_FIELDS.forEach(id=>{ if($(id)!==af) $(id).value=state[id]; if(state[id]) $('d_'+id).textContent=dow(state[id]); });
+}
+function renderIvRows(){
+  const box=$('ivDays'); box.innerHTML='';
+  state.ivDays.forEach((d,i)=>{
+    const row=document.createElement('div'); row.className='iv-row';
+    row.innerHTML=`<span class="dow">${dow(d)}</span><input type="date" value="${d}" data-i="${i}"><button class="iv-x" data-i="${i}" title="remove">×</button>`;
+    box.appendChild(row);
+  });
+  box.querySelectorAll('input[type=date]').forEach(inp=>inp.addEventListener('input',e=>{state.ivDays[+e.target.dataset.i]=e.target.value;renderDerived();syncIvRows();}));
+  box.querySelectorAll('.iv-x').forEach(b=>b.addEventListener('click',e=>{ if(state.ivDays.length>1){state.ivDays.splice(+e.target.dataset.i,1);renderIvRows();renderDerived();}}));
+}
+function syncIvRows(){
+  const rows=$('ivDays').querySelectorAll('.iv-row');
+  rows.forEach((row,i)=>{ const inp=row.querySelector('input'); if(inp!==document.activeElement) inp.value=state.ivDays[i]; row.querySelector('.dow').textContent=dow(state.ivDays[i]); });
+}
+function renderInfoRows(){
+  const box=$('infoList'); box.innerHTML='';
+  state.infoSessions.forEach((s,i)=>{
+    const row=document.createElement('div'); row.className='info-row';
+    row.innerHTML=`<input type="text" class="info-label" data-i="${i}" value="${s.label.replace(/"/g,'&quot;')}" placeholder="Label">
+      <div class="info-line"><span class="dow">${dow(s.date)}</span><input type="date" class="info-date" data-i="${i}" value="${s.date}"><button class="iv-x" data-i="${i}" title="remove">×</button></div>`;
+    box.appendChild(row);
+  });
+  box.querySelectorAll('.info-label').forEach(inp=>inp.addEventListener('input',e=>{state.infoSessions[+e.target.dataset.i].label=e.target.value;renderDerived();}));
+  box.querySelectorAll('.info-date').forEach(inp=>inp.addEventListener('input',e=>{state.infoSessions[+e.target.dataset.i].date=e.target.value;renderDerived();syncInfoRows();}));
+  box.querySelectorAll('.iv-x').forEach(b=>b.addEventListener('click',e=>{state.infoSessions.splice(+e.target.dataset.i,1);renderInfoRows();renderDerived();}));
+}
+function syncInfoRows(){
+  const rows=$('infoList').querySelectorAll('.info-row');
+  rows.forEach((row,i)=>{ if(!state.infoSessions[i])return; const di=row.querySelector('.info-date'); if(di!==document.activeElement) di.value=state.infoSessions[i].date; row.querySelector('.dow').textContent=dow(state.infoSessions[i].date); });
+}
+
+// ---------- URL state ----------
+function encodeState(s){
+  const compact={
+    c:s.pCand,p:s.pPerHr,h:s.pHrs,sc:s.pSch,
+    sC:s.scholarClose,sI:s.scholarInvite,sep:s.schSep?1:0,sV:s.scholarIv,
+    gC:s.genClose,gI:s.genInvite,
+    iv:s.ivDays,
+    r:s.results,d:s.dinner,
+    info:s.infoSessions.map(x=>({l:x.label,d:x.date}))
+  };
+  return btoa(unescape(encodeURIComponent(JSON.stringify(compact))));
+}
+function decodeState(hash){
+  try{
+    const raw=hash.startsWith('#')?hash.slice(1):hash;
+    const obj=JSON.parse(decodeURIComponent(escape(atob(raw))));
+    return {
+      pCand:obj.c??DEFAULTS.pCand, pPerHr:obj.p??DEFAULTS.pPerHr,
+      pHrs:obj.h??DEFAULTS.pHrs, pSch:obj.sc??DEFAULTS.pSch,
+      scholarClose:obj.sC??DEFAULTS.scholarClose,
+      scholarInvite:obj.sI??DEFAULTS.scholarInvite,
+      schSep:obj.sep===1, scholarIv:obj.sV??DEFAULTS.scholarIv,
+      genClose:obj.gC??DEFAULTS.genClose,
+      genInvite:obj.gI??DEFAULTS.genInvite,
+      ivDays:obj.iv??[...DEFAULTS.ivDays],
+      results:obj.r??DEFAULTS.results, dinner:obj.d??DEFAULTS.dinner,
+      infoSessions:(obj.info??[]).map(x=>({label:x.l,date:x.d}))
+    };
+  }catch(e){ return null; }
+}
+function pushHash(){
+  const encoded=encodeState(state);
+  history.replaceState(null,'','#'+encoded);
+}
+
+let toastTimer;
+function showToast(msg){
+  const t=$('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+$('shareBtn').addEventListener('click',()=>{
+  pushHash();
+  const url=location.href;
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(url).then(()=>showToast('✓ Link copied — paste it anywhere')).catch(()=>{prompt('Copy this link:',url);});
+  } else { prompt('Copy this link:',url); }
+});
+
+// ---------- orchestration ----------
+function renderDerived(){
+  pushHash();
+  buildCalendar(); renderCapacity(); renderGaps(); renderConflicts(); renderDeadline(); syncInputs(); syncIvRows(); syncInfoRows();
+}
+
+// bind control inputs
+NUM_FIELDS.forEach(([id,key])=>$(id).addEventListener('input',e=>{state[key]=parseFloat(e.target.value)||0;renderDerived();}));
+DATE_FIELDS.forEach(id=>$(id).addEventListener('input',e=>{state[id]=e.target.value;renderDerived();}));
+$('schSep').addEventListener('input',e=>{state.schSep=e.target.checked;renderDerived();});
+$('ivAdd').addEventListener('click',()=>{ const base=state.ivDays.length?addDays([...state.ivDays].sort().slice(-1)[0],1):'2026-08-21'; state.ivDays.push(base); renderIvRows(); renderDerived(); });
+$('infoAdd').addEventListener('click',()=>{ state.infoSessions.push({label:'Info Session',date:'2026-08-07'}); renderInfoRows(); renderDerived(); });
+$('resetBtn').addEventListener('click',()=>{ state=structuredClone(DEFAULTS); renderIvRows(); renderInfoRows(); renderDerived(); });
+
+// init — load from URL hash if present
+const hashState = location.hash ? decodeState(location.hash) : null;
+if(hashState) state = hashState;
+renderIvRows();
+renderInfoRows();
+renderDerived();
+</script>
+<div class="toast" id="toast"></div>
+</body>
+</html>
