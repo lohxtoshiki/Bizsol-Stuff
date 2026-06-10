@@ -54,10 +54,17 @@
   .cal-hint b{color:var(--accent)}
   .cal-scroll{overflow-x:auto}
   .cal{min-width:840px}
+  .cal-month-block+.cal-month-block{margin-top:26px;padding-top:20px;border-top:1px solid var(--line-soft)}
+  .cal-month-label{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 9px}
   .cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-bottom:7px}
   .cal-weekdays div{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);text-align:center;padding:2px 0}
   .cal-weekdays div.we{color:var(--ink-soft)}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+  .cal-top-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .cal-top-right .cal-hint{margin:0}
+  .btn-month{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;background:transparent;border:1px dashed var(--line);color:var(--ink-soft);border-radius:7px;padding:7px 12px;transition:.15s;white-space:nowrap;flex-shrink:0}
+  .btn-month:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+  .btn-month.active{background:var(--accent-soft);border:1px solid var(--accent);color:var(--accent)}
   .cal-cell{min-height:112px;border:1px solid var(--line);border-radius:9px;padding:7px 7px 8px;background:var(--paper);position:relative;transition:box-shadow .12s,border-color .12s,background .12s}
   .cal-cell.blank{background:transparent;border:1px dashed var(--line-soft)}
   .cal-cell.we{background:#F1F4F8}
@@ -188,16 +195,14 @@
   <!-- big calendar -->
   <section class="cal-card">
     <div class="cal-top">
-      <h2 class="cal-month">August <span>2026</span></h2>
-      <p class="cal-hint"><b>Drag</b> the coloured chips onto any day to reschedule. Dashed chips are fixed events.</p>
+      <h2 class="cal-month" id="calHeading">August <span>2026</span></h2>
+      <div class="cal-top-right">
+        <p class="cal-hint"><b>Drag</b> the coloured chips onto any day to reschedule. Dashed chips are fixed events.</p>
+        <button class="btn-month" id="monthToggle">＋ September</button>
+      </div>
     </div>
     <div class="cal-scroll">
-      <div class="cal">
-        <div class="cal-weekdays">
-          <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div class="we">Sat</div>
-        </div>
-        <div class="cal-grid" id="calGrid"></div>
-      </div>
+      <div class="cal" id="calMonths"></div>
     </div>
     <div class="legend">
       <span><i style="background:var(--scholar)"></i>Scholar round</span>
@@ -272,7 +277,8 @@ const DEFAULTS={
   genClose:'2026-08-17', genInvite:'2026-08-19',
   ivDays:['2026-08-21','2026-08-22','2026-08-24'],
   infoSessions:[{label:'Info Session (physical)',date:'2026-08-07'},{label:'Info Session (online)',date:'2026-08-14'}],
-  results:'2026-08-25', dinner:'2026-08-28'
+  results:'2026-08-25', dinner:'2026-08-28',
+  extraMonth:false
 };
 let state=structuredClone(DEFAULTS);
 
@@ -326,27 +332,45 @@ function model(){
 }
 
 // ---------- calendar ----------
-function buildCalendar(){
-  const grid=$('calGrid'); grid.innerHTML='';
-  const lead=new Date(2026,7,1).getDay(); // 6
+const FULL_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function renderMonthBlock(container, year, monthIdx, showLabel){
+  const daysInMonth=new Date(year,monthIdx+1,0).getDate();
+  const lead=new Date(year,monthIdx,1).getDay();
   const cellChips=chips();
+
+  const block=document.createElement('div');
+  block.className='cal-month-block';
+
+  if(showLabel){
+    const lbl=document.createElement('div');
+    lbl.className='cal-month-label';
+    lbl.textContent=FULL_MONTHS[monthIdx]+' '+year;
+    block.appendChild(lbl);
+  }
+
+  const wdRow=document.createElement('div'); wdRow.className='cal-weekdays';
+  ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach((n,i)=>{
+    const d=document.createElement('div'); d.textContent=n; if(i===6) d.className='we'; wdRow.appendChild(d);
+  });
+  block.appendChild(wdRow);
+
+  const grid=document.createElement('div'); grid.className='cal-grid';
   let cells=[];
   for(let i=0;i<lead;i++) cells.push(null);
-  for(let d=1;d<=31;d++) cells.push(d);
+  for(let d=1;d<=daysInMonth;d++) cells.push(d);
   while(cells.length%7!==0) cells.push(null);
 
   cells.forEach(d=>{
     const cell=document.createElement('div');
     if(d===null){ cell.className='cal-cell blank'; grid.appendChild(cell); return; }
-    const date='2026-08-'+pad(d);
+    const date=year+'-'+pad(monthIdx+1)+'-'+pad(d);
     cell.className='cal-cell'+(isWE(date)?' we':'')+(WARM.has(date)?' warm':'');
     cell.dataset.date=date;
     cell.innerHTML=`<span class="cal-daynum">${d}</span>`;
-    // fixed events first
     EVENTS.filter(e=>e.date===date).forEach(e=>{
       const ec=document.createElement('div'); ec.className='echip'+(e.warm?' warm':''); ec.textContent=e.label; cell.appendChild(ec);
     });
-    // draggable milestones
     cellChips.filter(c=>c.date===date).forEach(c=>{
       const ch=document.createElement('div');
       ch.className='chip'; ch.dataset.track=c.track; ch.dataset.mid=c.id;
@@ -357,6 +381,21 @@ function buildCalendar(){
     });
     grid.appendChild(cell);
   });
+
+  block.appendChild(grid);
+  container.appendChild(block);
+}
+
+function buildCalendar(){
+  const container=$('calMonths'); container.innerHTML='';
+  const multi=state.extraMonth;
+  renderMonthBlock(container,2026,7,multi); // August
+  if(multi) renderMonthBlock(container,2026,8,true); // September
+
+  $('calHeading').innerHTML=multi?'Aug–Sep <span>2026</span>':'August <span>2026</span>';
+  const btn=$('monthToggle');
+  btn.textContent=multi?'− Hide September':'＋ September';
+  btn.classList.toggle('active',multi);
 }
 
 // ---------- pointer drag ----------
@@ -532,7 +571,7 @@ function syncInfoRows(){
 // ---------- URL state ----------
 function encodeState(s){
   const compact={
-    c:s.pCand,p:s.pPerHr,hWD:s.pHrsWD,hWE:s.pHrsWE,sc:s.pSch,
+    c:s.pCand,p:s.pPerHr,hWD:s.pHrsWD,hWE:s.pHrsWE,sc:s.pSch,em:s.extraMonth?1:0,
     sC:s.scholarClose,sI:s.scholarInvite,sep:s.schSep?1:0,sV:s.scholarIv,
     gC:s.genClose,gI:s.genInvite,
     iv:s.ivDays,
@@ -548,6 +587,7 @@ function decodeState(hash){
     return {
       pCand:obj.c??DEFAULTS.pCand, pPerHr:obj.p??DEFAULTS.pPerHr,
       pHrsWD:obj.hWD??obj.h??DEFAULTS.pHrsWD, pHrsWE:obj.hWE??DEFAULTS.pHrsWE, pSch:obj.sc??DEFAULTS.pSch,
+      extraMonth:obj.em===1,
       scholarClose:obj.sC??DEFAULTS.scholarClose,
       scholarInvite:obj.sI??DEFAULTS.scholarInvite,
       schSep:obj.sep===1, scholarIv:obj.sV??DEFAULTS.scholarIv,
@@ -591,6 +631,7 @@ $('schSep').addEventListener('input',e=>{state.schSep=e.target.checked;renderDer
 $('ivAdd').addEventListener('click',()=>{ const base=state.ivDays.length?addDays([...state.ivDays].sort().slice(-1)[0],1):'2026-08-21'; state.ivDays.push(base); renderIvRows(); renderDerived(); });
 $('infoAdd').addEventListener('click',()=>{ state.infoSessions.push({label:'Info Session',date:'2026-08-07'}); renderInfoRows(); renderDerived(); });
 $('resetBtn').addEventListener('click',()=>{ state=structuredClone(DEFAULTS); renderIvRows(); renderInfoRows(); renderDerived(); });
+$('monthToggle').addEventListener('click',()=>{ state.extraMonth=!state.extraMonth; renderDerived(); });
 
 // init — load from URL hash if present
 const hashState = location.hash ? decodeState(location.hash) : null;
