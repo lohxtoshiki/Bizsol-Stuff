@@ -17,10 +17,10 @@
   --gold-hi:    #C49A60;
   --black:      #0D0D0D;
 
-  --navy-2:     rgba(4,24,64,0.58);
-  --navy-3:     rgba(4,24,64,0.32);
-  --navy-4:     rgba(4,24,64,0.08);
-  --gold-dim:   rgba(166,125,75,0.07);
+  --navy-2:     rgba(4,24,64,0.62);
+  --navy-3:     rgba(4,24,64,0.40);
+  --navy-4:     rgba(4,24,64,0.12);
+  --gold-dim:   rgba(166,125,75,0.08);
   --gold-line:  rgba(166,125,75,0.35);
   --royal-dim:  rgba(3,10,140,0.06);
   --royal-line: rgba(3,10,140,0.25);
@@ -29,7 +29,7 @@
 
   /* kept for JS inline usage */
   --buffer: #030A8C;
-  --muted:  rgba(4,24,64,0.32);
+  --muted:  rgba(4,24,64,0.38);
 
   --radius: 4px;
 }
@@ -41,14 +41,13 @@ body {
   background: var(--white);
   color: var(--navy);
   font-family: 'Jost', sans-serif;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.5;
   padding: clamp(28px, 4.5vw, 60px);
   overflow-x: hidden;
   min-height: 100vh;
 }
 
-/* 3-colour accent stripe across the top */
 body::before {
   content: '';
   position: fixed;
@@ -58,42 +57,39 @@ body::before {
   z-index: 200;
 }
 
-.wrap { max-width: 1100px; margin: 0 auto; }
+.wrap { max-width: 1140px; margin: 0 auto; }
 
 /* ── Header ──────────────────────────────── */
 header.masthead {
-  padding-top: 8px;
+  padding-top: 10px;
   padding-bottom: 32px;
   border-bottom: 2px solid var(--gold);
   margin-bottom: 30px;
 }
-
 .eyebrow {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.22em;
+  font-size: 11px;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--gold);
   margin-bottom: 18px;
 }
-
 h1 {
   font-family: 'Playfair Display', Georgia, serif;
   font-weight: 700;
-  font-size: clamp(38px, 6vw, 66px);
+  font-size: clamp(40px, 6vw, 68px);
   line-height: 1;
   letter-spacing: -0.02em;
   color: var(--navy);
   margin-bottom: 20px;
 }
-
 .meta {
   display: flex;
   flex-wrap: wrap;
   gap: 4px 0;
   align-items: center;
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--navy-2);
 }
 .meta b    { color: var(--navy); font-weight: 500; }
@@ -108,7 +104,6 @@ h1 {
   justify-content: space-between;
   margin-bottom: 36px;
 }
-
 .legend {
   display: flex;
   flex-wrap: wrap;
@@ -120,12 +115,12 @@ h1 {
   align-items: center;
   gap: 7px;
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.04em;
   color: var(--navy-2);
 }
 .swatch {
-  width: 11px; height: 11px;
+  width: 12px; height: 12px;
   flex: none; border-radius: 2px;
 }
 .swatch.go  { background: var(--gold-dim);  border: 1.5px solid var(--gold); }
@@ -143,65 +138,49 @@ h1 {
 }
 .toggle button {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--navy);
   border: 0;
   background: transparent;
-  padding: 8px 18px;
+  padding: 9px 20px;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
   border-right: 1.5px solid var(--navy);
 }
 .toggle button:last-child { border-right: 0; }
-.toggle button[aria-pressed="true"] {
-  background: var(--navy);
-  color: var(--white);
-}
+.toggle button[aria-pressed="true"] { background: var(--navy); color: var(--white); }
 .toggle button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
 /* ── Months ──────────────────────────────── */
 .months {
   display: flex;
   flex-direction: column;
-  animation: fadeUp 0.45s cubic-bezier(.22,.8,.36,1) both;
+  animation: fadeUp 0.4s cubic-bezier(.22,.8,.36,1) both;
 }
-
 .month {
   border-bottom: 1px solid var(--navy-4);
-  padding: 28px 0 32px;
+  padding: 26px 0 30px;
 }
 .month:first-child { border-top: 1px solid var(--navy-4); }
-.month.is-break { opacity: 0.6; }
+.month.is-break { opacity: 0.65; }
 
-.month-head {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 2px;
-}
+.month-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 2px; }
 .month-name {
   font-family: 'Playfair Display', Georgia, serif;
   font-weight: 700;
-  font-size: 28px;
+  font-size: 30px;
   letter-spacing: -0.015em;
   line-height: 1;
   color: var(--navy);
 }
-.month-name span {
-  font-size: 18px;
-  font-weight: 400;
-  color: var(--navy-3);
-  margin-left: 6px;
-  font-style: italic;
-}
+.month-name span { font-size: 19px; font-weight: 400; color: var(--navy-3); margin-left: 6px; font-style: italic; }
 
 .ribbon {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.04em;
   color: var(--navy-2);
   margin: 8px 0 0;
@@ -212,16 +191,16 @@ h1 {
   display: grid;
   grid-template-columns: repeat(7, minmax(0,1fr));
   gap: 4px;
-  margin: 16px 0 5px;
+  margin: 16px 0 6px;
 }
 .dow span {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 8.5px;
+  font-size: 10px;
   font-weight: 500;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--navy-3);
-  padding-left: 3px;
+  color: var(--navy-2);
+  padding-left: 4px;
 }
 .dow span.sat { color: var(--gold); }
 
@@ -233,63 +212,51 @@ h1 {
 
 /* ── Cells ───────────────────────────────── */
 .cell {
-  min-height: 92px;
-  padding: 8px 10px;
+  min-height: 96px;
+  padding: 9px 10px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
   position: relative;
   border-radius: var(--radius);
   border: 1px solid transparent;
 }
 .cell.empty { visibility: hidden; }
 
-.ctop {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 4px;
-}
+.ctop { display: flex; align-items: flex-start; justify-content: space-between; gap: 4px; }
+
+/* Date numbers — clearly visible like a real calendar */
 .num {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 13px;
-  font-weight: 400;
-  color: var(--navy-3);
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(4,24,64,0.65);
   line-height: 1;
 }
 .sno {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 500;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   line-height: 1;
   color: var(--navy-3);
 }
-.cbody {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-  flex: 1;
-}
+.cbody { display: flex; flex-direction: column; gap: 5px; min-width: 0; flex: 1; }
 
-/* off */
-.cell.off .num { color: var(--navy-4); }
+/* off — still readable */
+.cell.off .num { color: rgba(4,24,64,0.35); }
 
 /* break */
 .cell.brk { background: var(--paper); }
-.cell.brk .num { color: var(--navy-4); }
+.cell.brk .num { color: rgba(4,24,64,0.3); }
 
 /* recess */
-.cell.recess {
-  background: var(--paper);
-  border: 1px dashed var(--navy-4);
-}
-.cell.recess .num { color: var(--navy-3); }
+.cell.recess { background: var(--paper); border: 1px dashed var(--navy-4); }
+.cell.recess .num { color: rgba(4,24,64,0.45); }
 .cell.recess .rlabel {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 8px;
-  letter-spacing: 0.1em;
+  font-size: 9px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--navy-3);
 }
@@ -297,42 +264,34 @@ h1 {
 /* training session */
 .cell.session {
   background: var(--gold-dim);
-  border: 1px solid rgba(166,125,75,0.18);
+  border: 1px solid rgba(166,125,75,0.2);
   border-left: 3px solid var(--gold);
   cursor: pointer;
   transition: background 0.14s, box-shadow 0.14s, transform 0.1s;
 }
 .cell.session:hover {
-  background: rgba(166,125,75,0.13);
+  background: rgba(166,125,75,0.14);
   box-shadow: 0 4px 16px rgba(166,125,75,0.15);
   transform: translateY(-1px);
 }
-.cell.session .num {
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--navy);
-}
-.cell.session .sno {
-  font-size: 9px;
-  color: var(--gold);
-  font-weight: 500;
-}
+.cell.session .num  { font-size: 16px; font-weight: 600; color: var(--navy); }
+.cell.session .sno  { font-size: 10px; color: var(--gold); font-weight: 600; }
 .cell.session .time {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 8.5px;
+  font-size: 9.5px;
   color: var(--gold);
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
   font-weight: 500;
 }
-.cell.session .slots { display: flex; flex-direction: column; gap: 3px; }
+.cell.session .slots { display: flex; flex-direction: column; gap: 4px; }
 .cell.session .slot  { display: flex; gap: 5px; align-items: baseline; min-width: 0; }
 .cell.session .slot .lbl {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 7px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
+  font-size: 7.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   color: var(--gold);
-  background: rgba(166,125,75,0.12);
+  background: rgba(166,125,75,0.13);
   padding: 1px 4px;
   border-radius: 2px;
   flex: none;
@@ -340,27 +299,24 @@ h1 {
   margin-top: 2px;
 }
 .cell.session .slot .txt {
-  font-size: 10.5px;
+  font-size: 11.5px;
   color: var(--navy);
   font-weight: 400;
   line-height: 1.3;
   min-width: 0;
 }
-.cell.session.has-data {
-  border-left-color: var(--navy);
-  background: rgba(4,24,64,0.04);
-}
+.cell.session.has-data { border-left-width: 3px; border-left-color: var(--navy); }
 .cell.session.has-data::after {
   content: '';
   position: absolute;
-  top: 7px; right: 7px;
-  width: 5px; height: 5px;
+  top: 8px; right: 8px;
+  width: 6px; height: 6px;
   border-radius: 50%;
   background: var(--gold);
 }
 .cell.session .stored-loc {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 8.5px;
+  font-size: 9px;
   color: var(--navy-2);
   white-space: nowrap;
   overflow: hidden;
@@ -373,14 +329,13 @@ h1 {
   border: 1px solid rgba(3,10,140,0.1);
   border-left: 3px solid rgba(3,10,140,0.35);
 }
-.cell.buffer .num  { font-size: 15px; font-weight: 500; color: var(--royal); opacity: 0.7; }
-.cell.buffer .sno  { color: var(--royal); opacity: 0.5; }
+.cell.buffer .num  { font-size: 16px; font-weight: 600; color: rgba(3,10,140,0.65); }
+.cell.buffer .sno  { color: rgba(3,10,140,0.5); font-size: 10px; }
 .cell.buffer .time {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 8.5px;
-  color: var(--royal);
-  opacity: 0.6;
-  letter-spacing: 0.03em;
+  font-size: 9.5px;
+  color: rgba(3,10,140,0.55);
+  letter-spacing: 0.02em;
 }
 
 /* holiday */
@@ -389,11 +344,11 @@ h1 {
   border: 1px solid rgba(185,28,28,0.1);
   border-left: 3px solid rgba(185,28,28,0.45);
 }
-.cell.holiday      .num { font-size: 15px; font-weight: 500; color: rgb(185,28,28); }
+.cell.holiday      .num { font-size: 16px; font-weight: 600; color: rgb(185,28,28); }
 .cell.holiday.soft .num { color: rgba(185,28,28,0.55); }
-.cell.holiday      .hol { font-size: 10px; font-weight: 500; color: rgb(185,28,28); line-height: 1.25; }
+.cell.holiday      .hol { font-size: 11px; font-weight: 500; color: rgb(185,28,28); line-height: 1.3; }
 .cell.holiday.soft .hol { color: rgba(185,28,28,0.55); font-weight: 400; }
-.cell.holiday .hol small { display: block; font-size: 9px; font-weight: 400; color: rgba(185,28,28,0.45); }
+.cell.holiday .hol small { display: block; font-size: 9.5px; font-weight: 400; color: rgba(185,28,28,0.5); }
 
 /* event */
 .cell.event {
@@ -401,58 +356,42 @@ h1 {
   border: 1px solid rgba(3,10,140,0.1);
   border-left: 3px solid rgba(3,10,140,0.4);
 }
-.cell.event .num        { font-size: 15px; font-weight: 500; color: var(--royal); }
-.cell.event .event-name { font-size: 10.5px; font-weight: 500; color: var(--royal); line-height: 1.25; }
+.cell.event .num        { font-size: 16px; font-weight: 600; color: var(--royal); }
+.cell.event .event-name { font-size: 11.5px; font-weight: 500; color: var(--royal); line-height: 1.3; }
 .cell.event .event-time {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 8.5px;
+  font-size: 9.5px;
   color: rgba(3,10,140,0.55);
 }
 
 /* ── List view ───────────────────────────── */
-.list {
-  display: none;
-  border-top: 1px solid var(--navy-4);
-  animation: fadeUp 0.3s cubic-bezier(.22,.8,.36,1) both;
-}
+.list { display: none; border-top: 1px solid var(--navy-4); animation: fadeUp 0.3s cubic-bezier(.22,.8,.36,1) both; }
 .list.show { display: block; }
 .months.hide { display: none; }
 
 .lgroup-head {
   font-family: 'Playfair Display', Georgia, serif;
   font-weight: 700;
-  font-size: 19px;
+  font-size: 20px;
   color: var(--navy);
   padding: 22px 0 10px;
   border-bottom: 1px solid var(--navy-4);
   letter-spacing: -0.01em;
 }
-
 .lbreak {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 500;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--navy-3);
   padding: 14px 0;
   text-align: center;
   border-bottom: 1px solid var(--navy-4);
-  position: relative;
 }
-.lbreak::before {
-  content: '';
-  position: absolute;
-  left: 0; right: 0; top: 50%;
-  height: 1px;
-  background: var(--navy-4);
-  z-index: 0;
-}
-.lbreak > * { position: relative; z-index: 1; }
-
 .lrow {
   display: grid;
-  grid-template-columns: 44px 130px 130px 1fr;
+  grid-template-columns: 44px 140px 140px 1fr;
   gap: 16px;
   align-items: center;
   padding: 14px 0;
@@ -460,50 +399,38 @@ h1 {
   cursor: pointer;
   transition: background 0.12s;
 }
-.lrow:last-child { border-bottom: 0; }
-.lrow:hover { background: var(--gold-dim); }
-
+.lrow:last-child  { border-bottom: 0; }
+.lrow:hover       { background: var(--gold-dim); }
 .lrow .lno {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px; height: 32px;
+  width: 34px; height: 34px;
   border: 1.5px solid var(--gold-line);
   color: var(--gold);
   font-family: 'IBM Plex Mono', monospace;
-  font-weight: 500;
-  font-size: 12px;
+  font-weight: 600;
+  font-size: 13px;
   border-radius: var(--radius);
 }
-.lrow.lbuf          { cursor: default; }
-.lrow.lbuf:hover    { background: transparent; }
-.lrow.lbuf .lno     { border-color: var(--royal-line); color: var(--royal); opacity: 0.7; }
-
-.lrow .ldate        { font-weight: 500; font-size: 13px; color: var(--navy); }
-.lrow .ldate small  {
+.lrow.lbuf { cursor: default; }
+.lrow.lbuf:hover { background: transparent; }
+.lrow.lbuf .lno { border-color: var(--royal-line); color: rgba(3,10,140,0.55); }
+.lrow .ldate { font-weight: 600; font-size: 14px; color: var(--navy); }
+.lrow .ldate small {
   display: block;
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--navy-2);
   font-weight: 400;
   margin-top: 2px;
 }
-.lrow .ltime {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10.5px;
-  color: var(--gold);
-  font-weight: 500;
-  letter-spacing: 0.02em;
-}
-.lrow.lbuf .ltime   { color: var(--royal); opacity: 0.6; }
-.lrow .lfocus       { font-size: 12.5px; color: var(--navy-2); }
-.lrow .lfocus b     { color: var(--navy); font-weight: 600; }
+.lrow .ltime { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--gold); font-weight: 500; }
+.lrow.lbuf .ltime { color: rgba(3,10,140,0.5); }
+.lrow .lfocus { font-size: 13.5px; color: var(--navy-2); }
+.lrow .lfocus b { color: var(--navy); font-weight: 600; }
 .lrow .lfocus .arrow { color: var(--gold); margin: 0 8px; }
-.lrow.has-data .lno {
-  background: var(--gold-dim);
-  border-color: var(--gold);
-  color: var(--navy);
-}
+.lrow.has-data .lno { background: var(--gold-dim); border-color: var(--gold); color: var(--navy); }
 
 /* ── Modal ───────────────────────────────── */
 .session-modal {
@@ -516,7 +443,7 @@ h1 {
 }
 .modal-backdrop {
   position: absolute; inset: 0;
-  background: rgba(4,24,64,0.5);
+  background: rgba(4,24,64,0.45);
   backdrop-filter: blur(4px);
 }
 .modal-box {
@@ -525,8 +452,8 @@ h1 {
   border: 1px solid var(--navy-4);
   border-top: 3px solid var(--gold);
   border-radius: var(--radius);
-  box-shadow: 0 20px 60px rgba(4,24,64,0.2);
-  width: 100%; max-width: 520px;
+  box-shadow: 0 24px 64px rgba(4,24,64,0.18);
+  width: 100%; max-width: 660px;
   max-height: 90vh;
   overflow-y: auto;
 }
@@ -534,20 +461,20 @@ h1 {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 20px 22px 16px;
+  padding: 22px 26px 18px;
   border-bottom: 1px solid var(--navy-4);
 }
 .modal-sno {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 9.5px;
+  font-size: 10px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--gold);
-  margin-bottom: 5px;
+  margin-bottom: 6px;
 }
 .modal-date {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 21px;
+  font-size: 24px;
   font-weight: 700;
   color: var(--navy);
   line-height: 1.15;
@@ -557,45 +484,88 @@ h1 {
   border: 1px solid var(--navy-4);
   color: var(--navy-2);
   cursor: pointer;
-  width: 30px; height: 30px;
+  width: 32px; height: 32px;
   display: flex; align-items: center; justify-content: center;
   border-radius: var(--radius);
-  font-size: 16px;
+  font-size: 18px;
   flex: none;
   transition: border-color 0.15s, color 0.15s;
 }
 .modal-close-btn:hover { border-color: var(--navy); color: var(--navy); }
 
 .modal-base {
-  padding: 11px 22px;
+  padding: 14px 26px;
   background: var(--gold-dim);
   border-bottom: 1px solid rgba(166,125,75,0.15);
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 10.5px;
+  font-size: 11.5px;
 }
-.modal-base .mb-time  { color: var(--gold); font-weight: 500; margin-bottom: 3px; }
-.modal-base .mb-focus { color: var(--navy-2); }
+.modal-base .mb-time  { color: var(--gold); font-weight: 600; margin-bottom: 4px; }
+.modal-base .mb-focus { color: var(--navy-2); line-height: 1.5; }
 
-.modal-fields {
-  padding: 18px 22px 4px;
+/* ── Modal VIEW mode ─────────────────────── */
+.modal-info {
+  padding: 20px 26px 10px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px 16px;
+  gap: 0;
+}
+.info-row {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--navy-4);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 24px;
+}
+.info-row.full { grid-column: 1 / -1; padding-right: 0; }
+.info-row:last-child { border-bottom: 0; }
+.info-lbl {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--navy-3);
+}
+.info-val {
+  font-size: 14px;
+  color: var(--navy);
+  font-weight: 400;
+  line-height: 1.45;
+}
+.info-val.empty { color: var(--navy-3); font-style: italic; }
+
+.modal-view-actions {
+  padding: 16px 26px 22px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  border-top: 1px solid var(--navy-4);
+  margin-top: 8px;
+}
+
+/* ── Modal EDIT mode ─────────────────────── */
+.modal-fields {
+  padding: 20px 26px 4px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 18px;
 }
 .mfield        { display: flex; flex-direction: column; gap: 5px; }
 .mfield.full   { grid-column: 1 / -1; }
 .mfield label  {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 8.5px;
-  font-weight: 500;
+  font-size: 9px;
+  font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--navy-3);
 }
 .mfield input, .mfield textarea {
   font-family: 'Jost', sans-serif;
-  font-size: 13px;
-  border: 1px solid var(--navy-4);
+  font-size: 14px;
+  border: 1.5px solid var(--navy-4);
   border-radius: var(--radius);
   padding: 9px 12px;
   color: var(--navy);
@@ -610,42 +580,59 @@ h1 {
   box-shadow: 0 0 0 3px rgba(166,125,75,0.1);
   background: var(--white);
 }
-.mfield textarea { min-height: 72px; }
+.mfield textarea { min-height: 80px; }
 
 .modal-actions {
-  padding: 14px 22px 20px;
+  padding: 16px 26px 22px;
   display: flex;
   gap: 10px;
   justify-content: flex-end;
   border-top: 1px solid var(--navy-4);
-  margin-top: 14px;
+  margin-top: 16px;
 }
-.btn-cancel {
+
+/* ── Shared buttons ──────────────────────── */
+.btn-secondary {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 9.5px; font-weight: 500;
+  font-size: 10px; font-weight: 500;
   letter-spacing: 0.12em; text-transform: uppercase;
-  border: 1px solid var(--navy-4);
+  border: 1.5px solid var(--navy-4);
   background: transparent;
   color: var(--navy-2);
-  padding: 9px 20px;
+  padding: 10px 20px;
   border-radius: var(--radius);
   cursor: pointer;
   transition: border-color 0.12s, color 0.12s;
 }
-.btn-cancel:hover { border-color: var(--navy); color: var(--navy); }
-.btn-save {
+.btn-secondary:hover { border-color: var(--navy); color: var(--navy); }
+
+.btn-primary {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 9.5px; font-weight: 500;
+  font-size: 10px; font-weight: 500;
   letter-spacing: 0.12em; text-transform: uppercase;
   border: none;
   background: var(--navy);
   color: var(--white);
-  padding: 9px 22px;
+  padding: 10px 22px;
   border-radius: var(--radius);
   cursor: pointer;
   transition: background 0.12s;
 }
-.btn-save:hover { background: var(--royal); }
+.btn-primary:hover { background: var(--royal); }
+
+.btn-gold {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; font-weight: 500;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  border: 1.5px solid var(--gold);
+  background: transparent;
+  color: var(--gold);
+  padding: 10px 22px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.btn-gold:hover { background: var(--gold); color: var(--white); }
 
 /* ── Footer ──────────────────────────────── */
 footer {
@@ -653,32 +640,30 @@ footer {
   padding-top: 20px;
   border-top: 1px solid var(--navy-4);
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 9.5px;
+  font-size: 10px;
   color: var(--navy-3);
   line-height: 1.9;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
 }
 
 /* ── Animation ───────────────────────────── */
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ── Responsive ──────────────────────────── */
 @media (max-width: 720px) {
-  .cell { min-height: 74px; padding: 6px 7px; }
-  .cell.session .time { font-size: 7.5px; }
-  .cell.session .slot .txt { font-size: 9.5px; }
-  .num { font-size: 12px; }
-  .cell.session .num, .cell.buffer .num, .cell.holiday .num, .cell.event .num { font-size: 13px; }
-  .modal-fields { grid-template-columns: 1fr; }
-  .mfield.full { grid-column: 1; }
+  .cell { min-height: 78px; padding: 7px 8px; }
+  .cell.session .time { font-size: 8.5px; }
+  .cell.session .slot .txt { font-size: 10.5px; }
+  .modal-fields, .modal-info { grid-template-columns: 1fr; }
+  .mfield.full, .info-row.full { grid-column: 1; }
 }
 @media (max-width: 520px) {
-  .cell { min-height: 54px; }
+  .cell { min-height: 58px; }
   .cell.session .slots, .cell.session .time { display: none; }
-  .ribbon { font-size: 9px; }
+  .ribbon { font-size: 9.5px; }
   .lrow { grid-template-columns: 40px 1fr; gap: 10px 12px; }
   .lrow .ltime  { grid-column: 2; }
   .lrow .lfocus { grid-column: 1 / -1; }
@@ -727,6 +712,8 @@ footer {
 <div id="session-modal" class="session-modal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="modal-date">
   <div class="modal-backdrop" id="modal-backdrop"></div>
   <div class="modal-box">
+
+    <!-- Header (always visible) -->
     <div class="modal-header">
       <div>
         <div class="modal-sno" id="modal-sno"></div>
@@ -734,33 +721,70 @@ footer {
       </div>
       <button class="modal-close-btn" id="modal-close" aria-label="Close">&times;</button>
     </div>
+
+    <!-- Schedule info (always visible) -->
     <div class="modal-base" id="modal-base"></div>
-    <div class="modal-fields">
-      <div class="mfield">
-        <label for="mf-time">Time</label>
-        <input type="text" id="mf-time" placeholder="e.g. 9:00 AM – 5:00 PM" autocomplete="off">
+
+    <!-- VIEW mode (default) -->
+    <div id="modal-view">
+      <div class="modal-info">
+        <div class="info-row">
+          <span class="info-lbl">Confirmed Time</span>
+          <span class="info-val" id="vi-time">—</span>
+        </div>
+        <div class="info-row">
+          <span class="info-lbl">Location</span>
+          <span class="info-val" id="vi-loc">—</span>
+        </div>
+        <div class="info-row full">
+          <span class="info-lbl">Case for the Week</span>
+          <span class="info-val" id="vi-case">—</span>
+        </div>
+        <div class="info-row full">
+          <span class="info-lbl">Training Directors Coming</span>
+          <span class="info-val" id="vi-dir">—</span>
+        </div>
+        <div class="info-row full">
+          <span class="info-lbl">Remarks</span>
+          <span class="info-val" id="vi-rem">—</span>
+        </div>
       </div>
-      <div class="mfield">
-        <label for="mf-location">Location</label>
-        <input type="text" id="mf-location" placeholder="e.g. NTU LT 7A" autocomplete="off">
-      </div>
-      <div class="mfield full">
-        <label for="mf-case">Case for The Week</label>
-        <input type="text" id="mf-case" placeholder="Case study or focus area for this session" autocomplete="off">
-      </div>
-      <div class="mfield full">
-        <label for="mf-directors">Training Directors Coming</label>
-        <input type="text" id="mf-directors" placeholder="Names, separated by commas" autocomplete="off">
-      </div>
-      <div class="mfield full">
-        <label for="mf-remarks">Remarks</label>
-        <textarea id="mf-remarks" placeholder="Any additional notes, reminders, or changes…"></textarea>
+      <div class="modal-view-actions">
+        <button class="btn-secondary" id="modal-close-view">Close</button>
+        <button class="btn-gold" id="modal-edit-btn">Edit Details</button>
       </div>
     </div>
-    <div class="modal-actions">
-      <button class="btn-cancel" id="modal-cancel">Cancel</button>
-      <button class="btn-save" id="modal-save">Save</button>
+
+    <!-- EDIT mode (hidden by default) -->
+    <div id="modal-edit-form" style="display:none">
+      <div class="modal-fields">
+        <div class="mfield">
+          <label for="mf-time">Confirmed Time</label>
+          <input type="text" id="mf-time" placeholder="e.g. 9:00 AM – 5:00 PM" autocomplete="off">
+        </div>
+        <div class="mfield">
+          <label for="mf-location">Location</label>
+          <input type="text" id="mf-location" placeholder="e.g. NTU LT 7A" autocomplete="off">
+        </div>
+        <div class="mfield full">
+          <label for="mf-case">Case for the Week</label>
+          <input type="text" id="mf-case" placeholder="Case study or focus area for this session" autocomplete="off">
+        </div>
+        <div class="mfield full">
+          <label for="mf-directors">Training Directors Coming</label>
+          <input type="text" id="mf-directors" placeholder="Names, separated by commas" autocomplete="off">
+        </div>
+        <div class="mfield full">
+          <label for="mf-remarks">Remarks</label>
+          <textarea id="mf-remarks" placeholder="Any additional notes, reminders, or changes…"></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="modal-cancel">Cancel</button>
+        <button class="btn-primary" id="modal-save">Save</button>
+      </div>
     </div>
+
   </div>
 </div>
 
@@ -789,7 +813,7 @@ const SPECIAL_EVENTS = {
   "2026-8-28": {name:"Welcome Dinner", time:"6:00 PM – 10:00 PM"}
 };
 
-/* ----- Singapore public holidays (per NTU academic calendar, in range) ----- */
+/* ----- Singapore public holidays ----- */
 const HOLIDAYS = {
   "2026-8-9":  {name:"National Day"},
   "2026-8-10": {name:"National Day", sub:"replacement", soft:true},
@@ -803,14 +827,13 @@ const HOLIDAYS = {
   "2027-3-26": {name:"Good Friday"}
 };
 
-/* ----- Recess weeks (dashed) and general breaks (grey) ----- */
 const RECESS_RANGES = [
-  ["2026-09-28","2026-10-02"],   // Sem 1 recess week
-  ["2027-03-01","2027-03-05"]    // Sem 2 recess week
+  ["2026-09-28","2026-10-02"],
+  ["2027-03-01","2027-03-05"]
 ];
 const BREAK_RANGES = [
-  ["2026-10-25","2026-10-31"],   // end of Oct
-  ["2026-12-07","2027-01-08"]    // winter break
+  ["2026-10-25","2026-10-31"],
+  ["2026-12-07","2027-01-08"]
 ];
 
 const MONTHS = [
@@ -827,7 +850,6 @@ const MONTHS = [
 const DOW=["S","M","T","W","T","F","S"];
 const MN=["January","February","March","April","May","June","July","August","September","October","November","December"];
 
-/* lookup maps */
 const sMap={}; SESSIONS.forEach(s=>{const[y,m,d]=s.date.split("-").map(Number);sMap[`${y}-${m}-${d}`]=s;});
 function expand(ranges){const set=new Set();ranges.forEach(([a,b])=>{let d=parse(a),e=parse(b);while(d<=e){set.add(`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`);d.setDate(d.getDate()+1);}});return set;}
 function parse(iso){const[y,m,d]=iso.split("-").map(Number);return new Date(y,m-1,d);}
@@ -958,10 +980,16 @@ document.getElementById("footer").innerHTML=
   "NTU Business Solutions · Year 1 Training Schedule, AY 2026/27. "+
   "Public holidays and recess weeks follow the NTU academic calendar; in-lieu days marked “replacement”. "+
   "Case type, case number and remarks omitted by design. Times are SGT and subject to change. "+
-  "Click any training session to add or view session details.";
+  "Click any training session to view or edit session details.";
 
 /* ---------- Modal ---------- */
 let currentSno=null;
+
+function setVal(id,val){
+  const el=document.getElementById(id);
+  if(val&&val.trim()){el.textContent=val;el.classList.remove("empty");}
+  else{el.textContent="—";el.classList.add("empty");}
+}
 
 function openModal(sno){
   const s=SESSIONS.find(x=>x.no===sno);
@@ -975,7 +1003,6 @@ function openModal(sno){
   document.getElementById("modal-date").textContent=
     dt.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
 
-  /* base schedule info */
   const base=document.getElementById("modal-base");
   let baseHtml="";
   if(s.time) baseHtml+=`<div class="mb-time">${s.time}</div>`;
@@ -983,15 +1010,30 @@ function openModal(sno){
   else if(s.morning) baseHtml+=`<div class="mb-focus">${s.morning}</div>`;
   base.innerHTML=baseHtml||`<span style="color:var(--muted)">Schedule details TBC</span>`;
 
-  /* fill stored fields */
+  /* populate view mode */
+  setVal("vi-time", stored.time);
+  setVal("vi-loc",  stored.location);
+  setVal("vi-case", stored.caseOfWeek);
+  setVal("vi-dir",  stored.directors);
+  setVal("vi-rem",  stored.remarks);
+
+  /* show view mode */
+  document.getElementById("modal-view").style.display="";
+  document.getElementById("modal-edit-form").style.display="none";
+
+  document.getElementById("session-modal").style.display="flex";
+}
+
+function openEditMode(){
+  const stored=getStored(currentSno);
   document.getElementById("mf-time").value=stored.time||"";
   document.getElementById("mf-location").value=stored.location||"";
   document.getElementById("mf-case").value=stored.caseOfWeek||"";
   document.getElementById("mf-directors").value=stored.directors||"";
   document.getElementById("mf-remarks").value=stored.remarks||"";
 
-  const modal=document.getElementById("session-modal");
-  modal.style.display="flex";
+  document.getElementById("modal-view").style.display="none";
+  document.getElementById("modal-edit-form").style.display="";
   setTimeout(()=>document.getElementById("mf-time").focus(),50);
 }
 
@@ -1011,22 +1053,36 @@ function saveModal(){
   };
   setStored(currentSno,data);
   refreshCellIndicators(currentSno,data);
-  closeModal();
+
+  /* update view fields and return to view mode */
+  setVal("vi-time", data.time);
+  setVal("vi-loc",  data.location);
+  setVal("vi-case", data.caseOfWeek);
+  setVal("vi-dir",  data.directors);
+  setVal("vi-rem",  data.remarks);
+  document.getElementById("modal-view").style.display="";
+  document.getElementById("modal-edit-form").style.display="none";
 }
 
 document.getElementById("modal-close").addEventListener("click",closeModal);
-document.getElementById("modal-cancel").addEventListener("click",closeModal);
-document.getElementById("modal-save").addEventListener("click",saveModal);
+document.getElementById("modal-close-view").addEventListener("click",closeModal);
 document.getElementById("modal-backdrop").addEventListener("click",closeModal);
+document.getElementById("modal-edit-btn").addEventListener("click",openEditMode);
+document.getElementById("modal-cancel").addEventListener("click",()=>{
+  document.getElementById("modal-view").style.display="";
+  document.getElementById("modal-edit-form").style.display="none";
+});
+document.getElementById("modal-save").addEventListener("click",saveModal);
 document.addEventListener("keydown",e=>{
   if(e.key==="Escape")closeModal();
-  if(e.key==="Enter"&&e.metaKey&&currentSno!==null)saveModal();
+  if(e.key==="Enter"&&e.metaKey&&currentSno!==null){
+    if(document.getElementById("modal-edit-form").style.display!=="none") saveModal();
+  }
 });
 
 /* ---------- Attach click handlers & apply stored indicators ---------- */
 function refreshCellIndicators(sno,data){
   const hasData=hasAnyData(data);
-  /* calendar cells */
   document.querySelectorAll(`.cell[data-sno="${sno}"]`).forEach(cell=>{
     cell.classList.toggle("has-data",hasData);
     const existing=cell.querySelector(".stored-loc");
@@ -1038,13 +1094,11 @@ function refreshCellIndicators(sno,data){
       cell.querySelector(".cbody").appendChild(loc);
     }
   });
-  /* list rows */
   document.querySelectorAll(`.lrow[data-sno="${sno}"]`).forEach(row=>{
     row.classList.toggle("has-data",hasData);
   });
 }
 
-/* on load: attach click events and apply any saved data */
 document.querySelectorAll(".cell.session[data-sno]").forEach(cell=>{
   const sno=parseInt(cell.dataset.sno,10);
   cell.addEventListener("click",()=>openModal(sno));
@@ -1056,7 +1110,6 @@ document.querySelectorAll(".lrow[data-sno]").forEach(row=>{
   if(!sno)return;
   row.addEventListener("click",()=>openModal(sno));
 });
-/* also refresh list row indicators separately (cells already done above) */
 SESSIONS.filter(s=>s.kind!=="buffer").forEach(s=>{
   const stored=getStored(s.no);
   if(hasAnyData(stored)){
