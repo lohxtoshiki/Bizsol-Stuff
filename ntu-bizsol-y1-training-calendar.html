@@ -702,6 +702,11 @@ footer {
 </style>
 </head>
 <body>
+<!-- Loading overlay -->
+<div id="loading" style="position:fixed;inset:0;background:var(--white);display:flex;align-items:center;justify-content:center;z-index:9999;">
+  <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(4,24,64,0.4);">Loading calendar…</span>
+</div>
+
 <div class="wrap">
 
   <header class="masthead">
@@ -783,6 +788,22 @@ footer {
       </div>
     </div>
 
+
+    <!-- AUTH panel (password gate before editing) -->
+    <div id="modal-auth" style="display:none">
+      <div class="modal-fields">
+        <div class="mfield full">
+          <label for="mf-password">Edit Password</label>
+          <input type="password" id="mf-password" placeholder="Enter the club edit password" autocomplete="off">
+        </div>
+        <p id="pw-error" style="display:none;font-family:'IBM Plex Mono',monospace;font-size:10px;color:rgb(185,28,28);margin-top:-4px;">Incorrect password — try again</p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="modal-auth-cancel">Cancel</button>
+        <button class="btn-primary" id="modal-auth-submit">Unlock</button>
+      </div>
+    </div>
+
     <!-- EDIT mode (hidden by default) -->
     <div id="modal-edit-form" style="display:none">
       <div class="modal-fields">
@@ -836,6 +857,13 @@ footer {
 </div>
 
 <script>
+/* ─────────────────────────────────────────────────────────────────
+   SUPABASE CONFIG  –  fill in all three values then push to GitHub
+   ───────────────────────────────────────────────────────────────── */
+const SUPABASE_URL  = "https://YOUR_PROJECT_REF.supabase.co";   // Project URL
+const SUPABASE_KEY  = "YOUR_ANON_PUBLIC_KEY";                   // anon / public key
+const EDIT_PASSWORD = "change-me";                              // shared club password
+
 /* ===== Training sessions ===== */
 const SESSIONS = [
   {no:1,  date:"2026-08-29", time:"9:00 AM – 5:00 PM",   morning:"Appreciating the case", afternoon:"STI & Sliding"},
@@ -855,12 +883,10 @@ const SESSIONS = [
   {no:15, date:"2027-02-27", time:"TBC",                 morning:"24hr finale / week-long case", afternoon:null}
 ];
 
-/* ----- Special social events ----- */
+/* ===== Special events & Holidays ===== */
 const SPECIAL_EVENTS = {
   "2026-8-28": {name:"Welcome Dinner", time:"6:00 PM – 10:00 PM"}
 };
-
-/* ----- Singapore public holidays ----- */
 const HOLIDAYS = {
   "2026-8-9":  {name:"National Day"},
   "2026-8-10": {name:"National Day", sub:"in lieu"},
@@ -873,15 +899,11 @@ const HOLIDAYS = {
   "2027-3-10": {name:"Hari Raya Puasa", sub:"tentative date"},
   "2027-3-26": {name:"Good Friday"}
 };
-
 const RECESS_RANGES = [
   ["2026-09-28","2026-10-02"],
   ["2027-03-01","2027-03-05"]
 ];
-const BREAK_RANGES = [
-  ["2026-12-07","2027-01-08"]
-];
-
+const BREAK_RANGES = [["2026-12-07","2027-01-08"]];
 const MONTHS = [
   {y:2026,m:7},
   {y:2026,m:8,  ribbon:"<b>Sem 1 recess week</b> · 28 Sep – 2 Oct"},
@@ -892,115 +914,152 @@ const MONTHS = [
   {y:2027,m:1,  ribbon:"<b>Chinese New Year</b> 6–7 Feb · S13 on 13 Feb · season ends 27 Feb"},
   {y:2027,m:2,  ribbon:"<b>Sem 2 recess week</b> · 1 – 5 Mar · training season has ended"}
 ];
-
 const DOW=["S","M","T","W","T","F","S"];
 const MN=["January","February","March","April","May","June","July","August","September","October","November","December"];
 
-const sMap={}; SESSIONS.forEach(s=>{const[y,m,d]=s.date.split("-").map(Number);sMap[`${y}-${m}-${d}`]=s;});
+const sMap={};
+SESSIONS.forEach(s=>{const[y,m,d]=s.date.split("-").map(Number);sMap[`${y}-${m}-${d}`]=s;});
 function expand(ranges){const set=new Set();ranges.forEach(([a,b])=>{let d=parse(a),e=parse(b);while(d<=e){set.add(`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`);d.setDate(d.getDate()+1);}});return set;}
 function parse(iso){const[y,m,d]=iso.split("-").map(Number);return new Date(y,m-1,d);}
 const recessSet=expand(RECESS_RANGES), breakSet=expand(BREAK_RANGES);
 
-/* ===== localStorage helpers ===== */
-function getStored(no){
-  try{const r=localStorage.getItem(`bizsol_s${no}`);return r?JSON.parse(r):{};}catch(e){return {};}
-}
-function setStored(no,data){
-  try{localStorage.setItem(`bizsol_s${no}`,JSON.stringify(data));}catch(e){}
-}
-function hasAnyData(stored){
-  return stored&&Object.values(stored).some(v=>typeof v==="string"&&v.trim());
-}
+/* ===== Supabase data layer ===== */
+const storedMap = {};  /* session_no → stored object */
 
-/* ===== Effective-value helper =====
-   Merges stored overrides on top of the base SESSIONS entry.
-   stored.isBuffer overrides s.kind==="buffer" when explicitly set. */
+function sbHeaders(extra){
+  return {"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY,"Content-Type":"application/json",...extra};
+}
+async function loadAllData(){
+  try{
+    const res=await fetch(SUPABASE_URL+"/rest/v1/session_details?select=*",{headers:sbHeaders({})});
+    if(!res.ok)return;
+    const rows=await res.json();
+    rows.forEach(r=>{storedMap[r.session_no]=rowToStored(r);});
+  }catch(e){console.warn("Supabase load failed:",e);}
+}
+function rowToStored(r){
+  const s={};
+  if(r.time_override!==null) s.time=r.time_override;
+  if(r.am_content!==null)    s.amContent=r.am_content;
+  if(r.pm_content!==null)    s.pmContent=r.pm_content;
+  if(r.location!==null)      s.location=r.location;
+  if(r.case_of_week!==null)  s.caseOfWeek=r.case_of_week;
+  if(r.directors!==null)     s.directors=r.directors;
+  if(r.remarks!==null)       s.remarks=r.remarks;
+  if(r.is_buffer!==null)     s.isBuffer=r.is_buffer;
+  return s;
+}
+async function persistData(sessionNo,data){
+  const row={
+    session_no:sessionNo,
+    time_override:data.time||null,
+    am_content:data.amContent!==undefined?(data.amContent||null):null,
+    pm_content:data.pmContent!==undefined?(data.pmContent||null):null,
+    location:data.location||null,
+    case_of_week:data.caseOfWeek||null,
+    directors:data.directors||null,
+    remarks:data.remarks||null,
+    is_buffer:data.isBuffer!==undefined?data.isBuffer:null,
+    updated_at:new Date().toISOString()
+  };
+  const res=await fetch(SUPABASE_URL+"/rest/v1/session_details",{
+    method:"POST",
+    headers:sbHeaders({"Prefer":"resolution=merge-duplicates,return=minimal"}),
+    body:JSON.stringify(row)
+  });
+  if(!res.ok)throw new Error("Save failed "+res.status);
+}
+function getStored(no){return storedMap[no]||{};}
+
+/* ===== Effective-value helper ===== */
 function getEffective(s,stored){
   const defBuf=s.kind==="buffer";
   const effectiveBuf= stored.isBuffer===true  ? true
                     : stored.isBuffer===false ? false
                     : defBuf;
-  const effectiveTime= stored.time    || s.time;
+  const effectiveTime= stored.time||s.time;
   const effectiveAm  = (stored.amContent!==undefined&&stored.amContent!=="") ? stored.amContent : s.morning;
   const effectivePm  = (stored.pmContent!==undefined&&stored.pmContent!=="") ? stored.pmContent : s.afternoon;
   return {effectiveBuf,effectiveTime,effectiveAm,effectivePm};
 }
+function hasAnyData(stored){
+  const keys=["time","amContent","pmContent","location","caseOfWeek","directors","remarks"];
+  return stored&&(keys.some(k=>stored[k]&&String(stored[k]).trim())||stored.isBuffer!==undefined);
+}
 
 /* ===== Calendar render ===== */
-const monthsEl=document.getElementById("months");
-MONTHS.forEach(M=>{
-  const card=document.createElement("section");
-  card.className="month"+(M.isBreak?" is-break":"");
-  card.innerHTML=`<div class="month-head"><div class="month-name">${MN[M.m]} <span>${M.y}</span></div></div>`
-    +(M.ribbon?`<p class="ribbon">${M.ribbon}</p>`:"");
-
-  const dow=document.createElement("div");dow.className="dow";
-  DOW.forEach((d,i)=>{const sp=document.createElement("span");sp.textContent=d;if(i===6)sp.className="sat";dow.appendChild(sp);});
-  card.appendChild(dow);
-
-  const grid=document.createElement("div");grid.className="grid";
-  const first=new Date(M.y,M.m,1).getDay();
-  const days=new Date(M.y,M.m+1,0).getDate();
-  for(let i=0;i<first;i++){const e=document.createElement("div");e.className="cell empty";grid.appendChild(e);}
-
-  for(let d=1;d<=days;d++){
-    const key=`${M.y}-${M.m+1}-${d}`;
-    const s=sMap[key], hol=HOLIDAYS[key], evt=SPECIAL_EVENTS[key];
-    const cell=document.createElement("div");
-
-    if(s){
-      const stored=getStored(s.no);
-      const {effectiveBuf,effectiveTime,effectiveAm,effectivePm}=getEffective(s,stored);
-      cell.dataset.sno=s.no;
-      if(effectiveBuf){
-        cell.className="cell buffer";
+function renderCalendar(){
+  const monthsEl=document.getElementById("months");
+  monthsEl.innerHTML="";
+  MONTHS.forEach(M=>{
+    const card=document.createElement("section");
+    card.className="month"+(M.isBreak?" is-break":"");
+    card.innerHTML=`<div class="month-head"><div class="month-name">${MN[M.m]} <span>${M.y}</span></div></div>`
+      +(M.ribbon?`<p class="ribbon">${M.ribbon}</p>`:"");
+    const dow=document.createElement("div");dow.className="dow";
+    DOW.forEach((d,i)=>{const sp=document.createElement("span");sp.textContent=d;if(i===6)sp.className="sat";dow.appendChild(sp);});
+    card.appendChild(dow);
+    const grid=document.createElement("div");grid.className="grid";
+    const first=new Date(M.y,M.m,1).getDay();
+    const days=new Date(M.y,M.m+1,0).getDate();
+    for(let i=0;i<first;i++){const e=document.createElement("div");e.className="cell empty";grid.appendChild(e);}
+    for(let d=1;d<=days;d++){
+      const key=`${M.y}-${M.m+1}-${d}`;
+      const s=sMap[key],hol=HOLIDAYS[key],evt=SPECIAL_EVENTS[key];
+      const cell=document.createElement("div");
+      if(s){
+        const stored=getStored(s.no);
+        const {effectiveBuf,effectiveTime,effectiveAm,effectivePm}=getEffective(s,stored);
+        cell.dataset.sno=s.no;
+        if(effectiveBuf){
+          cell.className="cell buffer";
+          cell.innerHTML=`<div class="ctop"><span class="num">${d}</span></div>
+            <div class="cbody"><span class="time">Buffer · no session</span></div>`;
+        }else{
+          let slots="";
+          if(effectiveAm&&effectivePm){
+            slots=`<div class="slots">
+              <div class="slot"><span class="lbl">AM</span><span class="txt">${effectiveAm}</span></div>
+              <div class="slot"><span class="lbl">PM</span><span class="txt">${effectivePm}</span></div></div>`;
+          }else if(effectiveAm){
+            slots=`<div class="slots"><div class="slot"><span class="txt">${effectiveAm}</span></div></div>`;
+          }
+          const body=`<div class="cbody">${effectiveTime?`<span class="time">${effectiveTime}</span>`:""}${slots}</div>`;
+          const hasData=hasAnyData(stored);
+          cell.className="cell session"+(hasData?" has-data":"");
+          cell.innerHTML=`<div class="ctop"><span class="num">${d}</span><span class="sno">S${s.no}</span></div>${body}`;
+          if(hasData&&stored.location){
+            const loc=document.createElement("span");loc.className="stored-loc";
+            loc.textContent="📍 "+stored.location;cell.querySelector(".cbody").appendChild(loc);
+          }
+        }
+      }else if(evt){
+        cell.className="cell event";
         cell.innerHTML=`<div class="ctop"><span class="num">${d}</span></div>
-          <div class="cbody"><span class="time">Buffer · no session</span></div>`;
+          <div class="cbody"><span class="event-name">${evt.name}</span>${evt.time?`<span class="event-time">${evt.time}</span>`:""}</div>`;
+      }else if(hol){
+        cell.className="cell holiday"+(hol.soft?" soft":"");
+        cell.innerHTML=`<div class="ctop"><span class="num">${d}</span></div>
+          <div class="cbody"><span class="hol">${hol.name}${hol.sub?`<small>${hol.sub}</small>`:""}</span></div>`;
+      }else if(recessSet.has(key)){
+        cell.className="cell recess";
+        cell.innerHTML=`<div class="ctop"><span class="num">${d}</span></div>
+          <div class="cbody"><span class="rlabel">Recess</span></div>`;
+      }else if(breakSet.has(key)||M.isBreak){
+        cell.className="cell brk";
+        cell.innerHTML=`<div class="ctop"><span class="num">${d}</span></div>`;
       }else{
-        let slots="";
-        if(effectiveAm&&effectivePm){
-          slots=`<div class="slots">
-            <div class="slot"><span class="lbl">AM</span><span class="txt">${effectiveAm}</span></div>
-            <div class="slot"><span class="lbl">PM</span><span class="txt">${effectivePm}</span></div></div>`;
-        }else if(effectiveAm){
-          slots=`<div class="slots"><div class="slot"><span class="txt">${effectiveAm}</span></div></div>`;
-        }
-        const body=`<div class="cbody">${effectiveTime?`<span class="time">${effectiveTime}</span>`:""}${slots}</div>`;
-        const hasData=hasAnyData(stored);
-        cell.className="cell session"+(hasData?" has-data":"");
-        cell.innerHTML=`<div class="ctop"><span class="num">${d}</span><span class="sno">S${s.no}</span></div>${body}`;
-        if(hasData&&stored.location){
-          const loc=document.createElement("span");loc.className="stored-loc";
-          loc.textContent="📍 "+stored.location;cell.querySelector(".cbody").appendChild(loc);
-        }
+        cell.className="cell off";
+        cell.innerHTML=`<div class="ctop"><span class="num">${d}</span></div>`;
       }
-    }else if(evt){
-      cell.className="cell event";
-      cell.innerHTML=`<div class="ctop"><span class="num">${d}</span></div>
-        <div class="cbody"><span class="event-name">${evt.name}</span>${evt.time?`<span class="event-time">${evt.time}</span>`:""}</div>`;
-    }else if(hol){
-      cell.className="cell holiday"+(hol.soft?" soft":"");
-      cell.innerHTML=`<div class="ctop"><span class="num">${d}</span></div>
-        <div class="cbody"><span class="hol">${hol.name}${hol.sub?`<small>${hol.sub}</small>`:""}</span></div>`;
-    }else if(recessSet.has(key)){
-      cell.className="cell recess";
-      cell.innerHTML=`<div class="ctop"><span class="num">${d}</span></div>
-        <div class="cbody"><span class="rlabel">Recess</span></div>`;
-    }else if(breakSet.has(key)||M.isBreak){
-      cell.className="cell brk";
-      cell.innerHTML=`<div class="ctop"><span class="num">${d}</span></div>`;
-    }else{
-      cell.className="cell off";
-      cell.innerHTML=`<div class="ctop"><span class="num">${d}</span></div>`;
+      grid.appendChild(cell);
     }
-    grid.appendChild(cell);
-  }
-  card.appendChild(grid);
-  monthsEl.appendChild(card);
-});
+    card.appendChild(grid);
+    monthsEl.appendChild(card);
+  });
+}
 
 /* ===== List render ===== */
-const listEl=document.getElementById("list");
 const GROUPS=[
   {head:"Season opens · Aug 2026", range:[1,1]},
   {head:"Foundations · Sep 2026", range:[2,5]},
@@ -1028,19 +1087,23 @@ function rowHTML(s){
     <div class="ltime">${effectiveBuf?"—":(effectiveTime||"—")}</div>
     <div class="lfocus">${focus}</div></div>`;
 }
-let listHtml="";
-GROUPS.forEach(g=>{
-  if(g.brk){listHtml+=`<div class="lbreak">${g.brk}</div>`;return;}
-  listHtml+=`<div class="lgroup-head">${g.head}</div>`;
-  SESSIONS.filter(s=>s.no>=g.range[0]&&s.no<=g.range[1]).forEach(s=>listHtml+=rowHTML(s));
-});
-listEl.innerHTML=listHtml;
+function renderList(){
+  const listEl=document.getElementById("list");
+  let html="";
+  GROUPS.forEach(g=>{
+    if(g.brk){html+=`<div class="lbreak">${g.brk}</div>`;return;}
+    html+=`<div class="lgroup-head">${g.head}</div>`;
+    SESSIONS.filter(s=>s.no>=g.range[0]&&s.no<=g.range[1]).forEach(s=>html+=rowHTML(s));
+  });
+  listEl.innerHTML=html;
+}
 
 /* ===== View toggle ===== */
 const btnCal=document.getElementById("btnCal"),btnList=document.getElementById("btnList");
+const monthsEl2=document.getElementById("months"),listEl2=document.getElementById("list");
 function setView(cal){
   btnCal.setAttribute("aria-pressed",cal);btnList.setAttribute("aria-pressed",!cal);
-  monthsEl.classList.toggle("hide",!cal);listEl.classList.toggle("show",!cal);
+  monthsEl2.classList.toggle("hide",!cal);listEl2.classList.toggle("show",!cal);
 }
 btnCal.addEventListener("click",()=>setView(true));
 btnList.addEventListener("click",()=>setView(false));
@@ -1050,15 +1113,20 @@ document.getElementById("footer").innerHTML=
   "NTU Business Solutions · Year 1 Training Schedule, AY 2026/27. "+
   "Public holidays and recess weeks follow the NTU academic calendar; in-lieu days marked “replacement”. "+
   "Case type, case number and remarks omitted by design. Times are SGT and subject to change. "+
-  "Click any training session or buffer slot to view or edit details.";
+  "Click any session or buffer slot to view details. Edit access is password-protected.";
 
-/* ===== Modal ===== */
+/* ===== Modal state ===== */
 let currentSno=null, editIsBuffer=false;
 
 function setVal(id,val){
   const el=document.getElementById(id);
   if(val&&String(val).trim()){el.textContent=val;el.classList.remove("empty");}
   else{el.textContent="—";el.classList.add("empty");}
+}
+function showPanel(id){
+  ["modal-view","modal-auth","modal-edit-form"].forEach(p=>{
+    document.getElementById(p).style.display=(p===id)?"":"none";
+  });
 }
 
 function populateModalView(s,stored){
@@ -1085,23 +1153,41 @@ function populateModalView(s,stored){
 }
 
 function openModal(sno){
-  const s=SESSIONS.find(x=>x.no===sno);
-  if(!s)return;
+  const s=SESSIONS.find(x=>x.no===sno);if(!s)return;
   currentSno=sno;
   populateModalView(s,getStored(sno));
-  document.getElementById("modal-view").style.display="";
-  document.getElementById("modal-edit-form").style.display="none";
+  showPanel("modal-view");
   document.getElementById("session-modal").style.display="flex";
 }
 
+/* ── Auth gate ── */
+document.getElementById("modal-edit-btn").addEventListener("click",()=>{
+  document.getElementById("mf-password").value="";
+  document.getElementById("pw-error").style.display="none";
+  showPanel("modal-auth");
+  setTimeout(()=>document.getElementById("mf-password").focus(),50);
+});
+document.getElementById("modal-auth-cancel").addEventListener("click",()=>showPanel("modal-view"));
+document.getElementById("modal-auth-submit").addEventListener("click",checkPassword);
+document.getElementById("mf-password").addEventListener("keydown",e=>{if(e.key==="Enter")checkPassword();});
+function checkPassword(){
+  if(document.getElementById("mf-password").value===EDIT_PASSWORD){
+    openEditForm();
+  }else{
+    document.getElementById("pw-error").style.display="";
+    document.getElementById("mf-password").value="";
+    document.getElementById("mf-password").focus();
+  }
+}
+
+/* ── Edit form ── */
 function applyTypeToggle(isBuf){
   editIsBuffer=isBuf;
   document.getElementById("type-session").classList.toggle("active",!isBuf);
   document.getElementById("type-buffer").classList.toggle("active-buf",isBuf);
   document.getElementById("training-fields").style.display=isBuf?"none":"";
 }
-
-function openEditMode(){
+function openEditForm(){
   const s=SESSIONS.find(x=>x.no===currentSno);
   const stored=getStored(currentSno);
   const {effectiveBuf}=getEffective(s,stored);
@@ -1118,8 +1204,7 @@ function openEditMode(){
   document.getElementById("mf-case").value=stored.caseOfWeek||"";
   document.getElementById("mf-directors").value=stored.directors||"";
   document.getElementById("mf-remarks").value=stored.remarks||"";
-  document.getElementById("modal-view").style.display="none";
-  document.getElementById("modal-edit-form").style.display="";
+  showPanel("modal-edit-form");
   setTimeout(()=>document.getElementById("mf-time").focus(),50);
 }
 
@@ -1128,7 +1213,7 @@ function closeModal(){
   currentSno=null;
 }
 
-function saveModal(){
+async function saveModal(){
   if(currentSno===null)return;
   const s=SESSIONS.find(x=>x.no===currentSno);
   const isDefaultBuf=s.kind==="buffer";
@@ -1142,11 +1227,19 @@ function saveModal(){
     remarks:    document.getElementById("mf-remarks").value.trim()
   };
   if(editIsBuffer!==isDefaultBuf) data.isBuffer=editIsBuffer;
-  setStored(currentSno,data);
-  refreshCellFull(currentSno);
-  populateModalView(s,data);
-  document.getElementById("modal-view").style.display="";
-  document.getElementById("modal-edit-form").style.display="none";
+  const btn=document.getElementById("modal-save");
+  btn.textContent="Saving…"; btn.disabled=true;
+  try{
+    await persistData(currentSno,data);
+    storedMap[currentSno]=data;
+    refreshCellFull(currentSno);
+    populateModalView(s,data);
+    showPanel("modal-view");
+  }catch(e){
+    alert("Could not save — check your connection and try again.");
+  }finally{
+    btn.textContent="Save"; btn.disabled=false;
+  }
 }
 
 /* ===== Full cell + list-row refresh after save ===== */
@@ -1194,17 +1287,13 @@ function refreshCellFull(sno){
   });
 }
 
-/* ===== Event listeners ===== */
+/* ===== Static event listeners ===== */
 document.getElementById("modal-close").addEventListener("click",closeModal);
 document.getElementById("modal-close-view").addEventListener("click",closeModal);
 document.getElementById("modal-backdrop").addEventListener("click",closeModal);
-document.getElementById("modal-edit-btn").addEventListener("click",openEditMode);
 document.getElementById("type-session").addEventListener("click",()=>applyTypeToggle(false));
 document.getElementById("type-buffer").addEventListener("click",()=>applyTypeToggle(true));
-document.getElementById("modal-cancel").addEventListener("click",()=>{
-  document.getElementById("modal-view").style.display="";
-  document.getElementById("modal-edit-form").style.display="none";
-});
+document.getElementById("modal-cancel").addEventListener("click",()=>showPanel("modal-view"));
 document.getElementById("modal-save").addEventListener("click",saveModal);
 document.addEventListener("keydown",e=>{
   if(e.key==="Escape")closeModal();
@@ -1212,16 +1301,27 @@ document.addEventListener("keydown",e=>{
      document.getElementById("modal-edit-form").style.display!=="none") saveModal();
 });
 
-/* ===== Attach click handlers to all session + buffer cells ===== */
-document.querySelectorAll(".cell[data-sno]").forEach(cell=>{
-  const sno=parseInt(cell.dataset.sno,10);
-  cell.onclick=()=>openModal(sno);
-});
-document.querySelectorAll(".lrow[data-sno]").forEach(row=>{
-  const sno=parseInt(row.dataset.sno,10);
-  if(!sno||row.classList.contains("lbuf"))return;
-  row.onclick=()=>openModal(sno);
-});
+/* ===== Initialise: load Supabase data then render ===== */
+async function init(){
+  await loadAllData();
+  renderCalendar();
+  renderList();
+  /* attach cell/row click handlers */
+  document.querySelectorAll(".cell[data-sno]").forEach(cell=>{
+    const sno=parseInt(cell.dataset.sno,10);
+    cell.onclick=()=>openModal(sno);
+  });
+  document.querySelectorAll(".lrow[data-sno]").forEach(row=>{
+    const sno=parseInt(row.dataset.sno,10);
+    const stored=getStored(sno);
+    const s=SESSIONS.find(x=>x.no===sno);
+    const {effectiveBuf}=s?getEffective(s,stored):{effectiveBuf:false};
+    if(!sno||effectiveBuf)return;
+    row.onclick=()=>openModal(sno);
+  });
+  document.getElementById("loading").style.display="none";
+}
+init();
 
 </script>
 </body>
