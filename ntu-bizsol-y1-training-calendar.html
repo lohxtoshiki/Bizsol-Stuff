@@ -15,6 +15,7 @@
     --go:#2F7A57; --go-deep:#256348; --go-soft:#E6F0EA; --go-line:#CADED2;
     --buffer:#C57F22; --buffer-soft:#FBEEDA; --buffer-line:#F0D9B6;
     --scarlet:#C8102E; --scarlet-soft:#FBE7EA; --scarlet-line:#F2CBD1;
+    --social:#6B3FA0; --social-soft:#F0E8F8; --social-line:#C4A0E8;
     --break-bg:#EFEDE5;
     --radius:14px;
     --shadow:0 1px 2px rgba(22,36,63,.04), 0 8px 24px rgba(22,36,63,.06);
@@ -47,6 +48,7 @@
   .swatch.hol{background:var(--scarlet-soft);border:1.5px solid var(--scarlet);}
   .swatch.rec{background:var(--break-bg);border:1px dashed var(--muted);}
   .swatch.brk{background:var(--break-bg);border:1px solid var(--line);}
+  .swatch.evt{background:var(--social-soft);border:1.5px solid var(--social-line);}
 
   .toggle{display:inline-flex;border:1px solid var(--line);border-radius:999px;background:var(--card);padding:3px;box-shadow:var(--shadow);}
   .toggle button{font:inherit;font-size:13px;font-weight:600;color:var(--muted);border:0;background:transparent;padding:7px 16px;border-radius:999px;cursor:pointer;transition:background .15s,color .15s;}
@@ -85,7 +87,8 @@
   .cell.recess .rlabel{font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;}
 
   /* training session */
-  .cell.session{background:var(--go-soft);border:1.5px solid var(--go-line);}
+  .cell.session{background:var(--go-soft);border:1.5px solid var(--go-line);cursor:pointer;transition:filter .12s,transform .1s;}
+  .cell.session:hover{filter:brightness(.95);transform:translateY(-1px);}
   .cell.session .num{color:var(--go);font-weight:700;font-size:16px;}
   .cell.session .sno{color:var(--go);opacity:.7;}
   .cell.session .time{font-size:11px;font-weight:600;color:var(--go-deep);background:#fff;border:1px solid var(--go-line);border-radius:6px;padding:2px 6px;display:inline-block;width:fit-content;max-width:100%;}
@@ -93,6 +96,10 @@
   .cell.session .slot{display:flex;gap:6px;align-items:baseline;font-size:11.5px;color:var(--go-deep);font-weight:600;line-height:1.25;min-width:0;}
   .cell.session .slot .lbl{font-size:8.5px;font-weight:700;letter-spacing:.05em;color:var(--go);background:#fff;border:1px solid var(--go-line);border-radius:4px;padding:1px 5px;flex:none;align-self:flex-start;margin-top:1px;}
   .cell.session .slot .txt{min-width:0;}
+  /* saved-data indicator */
+  .cell.session.has-data{border-color:var(--go);}
+  .cell.session.has-data::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:11px 0 0 11px;background:var(--go);}
+  .cell.session .stored-loc{font-size:9.5px;color:var(--go-deep);font-weight:600;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
   /* buffer */
   .cell.buffer{background:var(--buffer-soft);border:1.5px solid var(--buffer-line);}
@@ -109,15 +116,24 @@
   .cell.holiday.soft .hol{color:#B0626C;font-weight:500;}
   .cell.holiday .hol small{display:block;font-weight:500;color:#B0626C;font-size:9.5px;}
 
+  /* social / special event */
+  .cell.event{background:var(--social-soft);border:1.5px solid var(--social-line);}
+  .cell.event .num{color:var(--social);font-weight:700;font-size:16px;}
+  .cell.event .event-name{font-size:11px;font-weight:700;color:var(--social);letter-spacing:.01em;line-height:1.25;}
+  .cell.event .event-time{font-size:10px;color:var(--social);opacity:.8;font-weight:500;}
+
   /* List view */
   .list{display:none;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
   .list.show{display:block;}
   .months.hide{display:none;}
   .lgroup-head{background:var(--ink);color:#fff;font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:15px;padding:11px 20px;letter-spacing:.01em;}
   .lbreak{background:var(--break-bg);color:var(--ink-soft);font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:9px 20px;text-align:center;border-bottom:1px solid var(--line);}
-  .lrow{display:grid;grid-template-columns:54px 132px 132px 1fr;gap:16px;align-items:center;padding:13px 20px;border-bottom:1px solid var(--line);}
+  .lrow{display:grid;grid-template-columns:54px 132px 132px 1fr;gap:16px;align-items:center;padding:13px 20px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .12s;}
+  .lrow:hover{background:var(--go-soft);}
   .lrow:last-child{border-bottom:0;}
   .lrow .lno{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:9px;background:var(--go-soft);border:1.5px solid var(--go-line);color:var(--go);font-weight:700;font-size:14px;}
+  .lrow.lbuf{cursor:default;}
+  .lrow.lbuf:hover{background:transparent;}
   .lrow.lbuf .lno{background:var(--buffer-soft);border-color:var(--buffer-line);color:var(--buffer);}
   .lrow .ldate{font-weight:600;font-size:14px;}
   .lrow .ldate small{display:block;color:var(--muted);font-weight:500;font-size:11.5px;}
@@ -126,6 +142,36 @@
   .lrow .lfocus{font-size:13px;color:var(--ink-soft);}
   .lrow .lfocus b{color:var(--ink);font-weight:600;}
   .lrow .lfocus .arrow{color:var(--muted-soft);margin:0 6px;}
+  .lrow.has-data .lno{border-width:2px;border-color:var(--go);}
+
+  /* ---- Modal ---- */
+  .session-modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .modal-backdrop{position:absolute;inset:0;background:rgba(22,36,63,.45);backdrop-filter:blur(3px);}
+  .modal-box{position:relative;background:var(--card);border-radius:var(--radius);box-shadow:0 20px 60px rgba(22,36,63,.25);width:100%;max-width:520px;max-height:90vh;overflow-y:auto;}
+  .modal-header{display:flex;align-items:flex-start;justify-content:space-between;padding:20px 22px 16px;border-bottom:1px solid var(--line);}
+  .modal-sno{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--go);margin-bottom:4px;}
+  .modal-date{font-family:'Fraunces',Georgia,serif;font-size:20px;font-weight:500;color:var(--ink);line-height:1.2;}
+  .modal-close-btn{background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;flex:none;margin-top:-2px;}
+  .modal-close-btn:hover{background:var(--line);color:var(--ink);}
+  .modal-base{padding:11px 22px;background:var(--go-soft);border-bottom:1px solid var(--go-line);font-size:12.5px;color:var(--go-deep);}
+  .modal-base .mb-time{font-weight:700;margin-bottom:3px;}
+  .modal-base .mb-focus{color:var(--go-deep);opacity:.85;}
+  .modal-fields{padding:18px 22px 4px;display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;}
+  .mfield{display:flex;flex-direction:column;gap:5px;}
+  .mfield.full{grid-column:1/-1;}
+  .mfield label{font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);}
+  .mfield input,.mfield textarea{
+    font:inherit;font-size:13.5px;border:1.5px solid var(--line);
+    border-radius:9px;padding:9px 12px;color:var(--ink);background:var(--paper);
+    resize:vertical;transition:border-color .15s,box-shadow .15s;
+  }
+  .mfield input:focus,.mfield textarea:focus{outline:none;border-color:var(--go);box-shadow:0 0 0 3px rgba(47,122,87,.12);}
+  .mfield textarea{min-height:72px;}
+  .modal-actions{padding:14px 22px 20px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--line);margin-top:14px;}
+  .btn-cancel{font:inherit;font-size:13.5px;font-weight:600;border:1.5px solid var(--line);background:transparent;color:var(--ink-soft);padding:9px 20px;border-radius:9px;cursor:pointer;transition:background .12s;}
+  .btn-cancel:hover{background:var(--line);}
+  .btn-save{font:inherit;font-size:13.5px;font-weight:600;border:none;background:var(--go);color:#fff;padding:9px 22px;border-radius:9px;cursor:pointer;transition:background .12s;}
+  .btn-save:hover{background:var(--go-deep);}
 
   footer{margin-top:30px;border-top:1px solid var(--line);padding-top:16px;font-size:11.5px;color:var(--muted);}
 
@@ -135,6 +181,8 @@
     .cell.session .slot{font-size:10.5px;}
     .num{font-size:13px;}
     .cell.session .num,.cell.buffer .num,.cell.holiday .num{font-size:14px;}
+    .modal-fields{grid-template-columns:1fr;}
+    .mfield.full{grid-column:1;}
   }
   @media (max-width:520px){
     .cell{min-height:58px;}
@@ -156,7 +204,7 @@
     <div class="meta">
       <span><b>AY 2026/27</b></span><span class="dot">·</span>
       <span><b>14</b> training sessions</span><span class="dot">·</span>
-      <span>29 Aug 2026 &ndash; 27 Feb 2027</span><span class="dot">·</span>
+      <span>28 Aug 2026 &ndash; 27 Feb 2027</span><span class="dot">·</span>
       <span>Saturdays unless noted</span>
     </div>
   </header>
@@ -168,6 +216,7 @@
       <span class="item"><span class="swatch hol"></span>Public holiday</span>
       <span class="item"><span class="swatch rec"></span>Recess week</span>
       <span class="item"><span class="swatch brk"></span>Break</span>
+      <span class="item"><span class="swatch evt"></span>Social event</span>
     </div>
     <div class="toggle" role="group" aria-label="Choose view">
       <button id="btnCal" aria-pressed="true">Calendar</button>
@@ -181,26 +230,71 @@
   <footer id="footer"></footer>
 </div>
 
+<!-- Session detail modal -->
+<div id="session-modal" class="session-modal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="modal-date">
+  <div class="modal-backdrop" id="modal-backdrop"></div>
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <div class="modal-sno" id="modal-sno"></div>
+        <div class="modal-date" id="modal-date"></div>
+      </div>
+      <button class="modal-close-btn" id="modal-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-base" id="modal-base"></div>
+    <div class="modal-fields">
+      <div class="mfield">
+        <label for="mf-time">Time</label>
+        <input type="text" id="mf-time" placeholder="e.g. 9:00 AM – 5:00 PM" autocomplete="off">
+      </div>
+      <div class="mfield">
+        <label for="mf-location">Location</label>
+        <input type="text" id="mf-location" placeholder="e.g. NTU LT 7A" autocomplete="off">
+      </div>
+      <div class="mfield full">
+        <label for="mf-case">Case for The Week</label>
+        <input type="text" id="mf-case" placeholder="Case study or focus area for this session" autocomplete="off">
+      </div>
+      <div class="mfield full">
+        <label for="mf-directors">Training Directors Coming</label>
+        <input type="text" id="mf-directors" placeholder="Names, separated by commas" autocomplete="off">
+      </div>
+      <div class="mfield full">
+        <label for="mf-remarks">Remarks</label>
+        <textarea id="mf-remarks" placeholder="Any additional notes, reminders, or changes…"></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="modal-cancel">Cancel</button>
+      <button class="btn-save" id="modal-save">Save</button>
+    </div>
+  </div>
+</div>
+
 <script>
-/* ----- Training sessions (case type / case no. / remarks omitted) ----- */
+/* ----- Training sessions ----- */
 const SESSIONS = [
-  {no:1,  date:"2026-08-29", time:null,                 morning:null, afternoon:null, kind:"buffer"},
-  {no:2,  date:"2026-09-05", time:"9:00 AM – 5:00 PM",  morning:"Appreciating the case", afternoon:"STI & Sliding"},
-  {no:3,  date:"2026-09-12", time:"9:00 AM – 5:00 PM",  morning:"Present STI", afternoon:"Recommendation"},
-  {no:4,  date:"2026-09-19", time:"9:00 AM – 5:00 PM",  morning:"Present STI + Rec.", afternoon:"Finance"},
-  {no:5,  date:"2026-09-26", time:"9:00 AM – 12:30 PM", morning:"Present case", afternoon:null},
-  {no:6,  date:"2026-10-04", time:null,                 morning:null, afternoon:null, kind:"buffer"},
-  {no:7,  date:"2026-10-10", time:"9:00 AM – 12:30 PM", morning:"Present case", afternoon:null},
-  {no:8,  date:"2026-10-17", time:"9:00 AM – 12:30 PM", morning:"Present case", afternoon:null},
-  {no:9,  date:"2026-10-24", time:"9:00 AM – 12:30 PM", morning:"Present case", afternoon:null},
-  {no:10, date:"2027-01-09", time:"9:00 AM – 5:00 PM",  morning:"24hr presentation", afternoon:"Component training"},
-  {no:11, date:"2027-01-16", time:"9:00 AM – 5:00 PM",  morning:"Present case", afternoon:"Component refresher"},
-  {no:12, date:"2027-01-23", time:"9:00 AM – 12:30 PM", morning:"Present case", afternoon:null},
-  {no:13, date:"2027-01-30", time:"8:00 AM – 7:30 PM",  morning:"7-hr case · 0800–1500", afternoon:"Present · 1530–1930"},
-  {no:14, date:"2027-02-13", time:"9:00 AM – 4:00 PM",  morning:"Present case", afternoon:"Tactics"},
-  {no:15, date:"2027-02-20", time:"9:00 AM – 12:30 PM", morning:"Present case", afternoon:null},
-  {no:16, date:"2027-02-27", time:"TBC",                morning:"24hr finale / week-long case", afternoon:null}
+  {no:1,  date:"2026-08-29", time:"TBD",                 morning:"Opening session", afternoon:null},
+  {no:2,  date:"2026-09-05", time:"9:00 AM – 5:00 PM",   morning:"Appreciating the case", afternoon:"STI & Sliding"},
+  {no:3,  date:"2026-09-12", time:"9:00 AM – 5:00 PM",   morning:"Present STI", afternoon:"Recommendation"},
+  {no:4,  date:"2026-09-19", time:"9:00 AM – 5:00 PM",   morning:"Present STI + Rec.", afternoon:"Finance"},
+  {no:5,  date:"2026-09-26", time:"9:00 AM – 12:30 PM",  morning:"Present case", afternoon:null},
+  {no:6,  date:"2026-10-04", time:null,                  morning:null, afternoon:null, kind:"buffer"},
+  {no:7,  date:"2026-10-10", time:"9:00 AM – 12:30 PM",  morning:"Present case", afternoon:null},
+  {no:8,  date:"2026-10-17", time:"9:00 AM – 12:30 PM",  morning:"Present case", afternoon:null},
+  {no:9,  date:"2026-10-24", time:"9:00 AM – 12:30 PM",  morning:"Present case", afternoon:null},
+  {no:10, date:"2027-01-09", time:"9:00 AM – 5:00 PM",   morning:"24hr presentation", afternoon:"Component training"},
+  {no:11, date:"2027-01-16", time:"9:00 AM – 5:00 PM",   morning:"Present case", afternoon:"Component refresher"},
+  {no:12, date:"2027-01-23", time:"9:00 AM – 12:30 PM",  morning:"Present case", afternoon:null},
+  {no:13, date:"2027-01-30", time:"8:00 AM – 7:30 PM",   morning:"7-hr case · 0800–1500", afternoon:"Present · 1530–1930 · Tactics"},
+  {no:14, date:"2027-02-20", time:"9:00 AM – 12:30 PM",  morning:"Present case", afternoon:null},
+  {no:15, date:"2027-02-27", time:"TBC",                 morning:"24hr finale / week-long case", afternoon:null}
 ];
+
+/* ----- Special social events ----- */
+const SPECIAL_EVENTS = {
+  "2026-8-28": {name:"Welcome Dinner", time:"6:00 PM – 10:00 PM"}
+};
 
 /* ----- Singapore public holidays (per NTU academic calendar, in range) ----- */
 const HOLIDAYS = {
@@ -223,8 +317,7 @@ const RECESS_RANGES = [
 ];
 const BREAK_RANGES = [
   ["2026-10-25","2026-10-31"],   // start of finals / winter break
-  ["2027-01-01","2027-01-08"],   // tail of winter break
-  ["2027-02-01","2027-02-12"]    // CNY break (holidays drawn on top)
+  ["2027-01-01","2027-01-08"]    // tail of winter break
 ];
 
 const MONTHS = [
@@ -234,7 +327,7 @@ const MONTHS = [
   {y:2026,m:10, isBreak:true, ribbon:"No training · <b>Deepavali</b> 8 Nov · 24-hr case to be done over the break"},
   {y:2026,m:11, isBreak:true, ribbon:"No training · <b>Christmas Day</b> 25 Dec"},
   {y:2027,m:0},
-  {y:2027,m:1,  ribbon:"<b>Chinese New Year</b> 6–7 Feb · training resumes Sat 13 Feb"},
+  {y:2027,m:1,  ribbon:"<b>Chinese New Year</b> 6–7 Feb · training resumes Sat 20 Feb"},
   {y:2027,m:2,  ribbon:"<b>Sem 2 recess week</b> · 1 – 5 Mar · training season has ended"}
 ];
 
@@ -246,6 +339,17 @@ const sMap={}; SESSIONS.forEach(s=>{const[y,m,d]=s.date.split("-").map(Number);s
 function expand(ranges){const set=new Set();ranges.forEach(([a,b])=>{let d=parse(a),e=parse(b);while(d<=e){set.add(`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`);d.setDate(d.getDate()+1);}});return set;}
 function parse(iso){const[y,m,d]=iso.split("-").map(Number);return new Date(y,m-1,d);}
 const recessSet=expand(RECESS_RANGES), breakSet=expand(BREAK_RANGES);
+
+/* ---------- localStorage helpers ---------- */
+function getStored(no){
+  try{const r=localStorage.getItem(`bizsol_s${no}`);return r?JSON.parse(r):{};}catch(e){return {};}
+}
+function setStored(no,data){
+  try{localStorage.setItem(`bizsol_s${no}`,JSON.stringify(data));}catch(e){}
+}
+function hasAnyData(stored){
+  return stored && Object.values(stored).some(v=>v&&v.trim&&v.trim());
+}
 
 /* ---------- Calendar render ---------- */
 const monthsEl=document.getElementById("months");
@@ -266,7 +370,7 @@ MONTHS.forEach(M=>{
 
   for(let d=1;d<=days;d++){
     const key=`${M.y}-${M.m+1}-${d}`;
-    const s=sMap[key], hol=HOLIDAYS[key];
+    const s=sMap[key], hol=HOLIDAYS[key], evt=SPECIAL_EVENTS[key];
     const cell=document.createElement("div");
 
     if(s){
@@ -285,8 +389,13 @@ MONTHS.forEach(M=>{
           slots=`<div class="slots"><div class="slot"><span class="txt">${s.morning}</span></div></div>`;
         }
         body=`<div class="cbody">${s.time?`<span class="time">${s.time}</span>`:""}${slots}</div>`;
+        cell.dataset.sno=s.no;
       }
       cell.innerHTML=`<div class="ctop"><span class="num">${d}</span><span class="sno">S${s.no}</span></div>${body}`;
+    } else if(evt){
+      cell.className="cell event";
+      cell.innerHTML=`<div class="ctop"><span class="num">${d}</span></div>
+        <div class="cbody"><span class="event-name">${evt.name}</span>${evt.time?`<span class="event-time">${evt.time}</span>`:""}</div>`;
     } else if(hol){
       cell.className="cell holiday"+(hol.soft?" soft":"");
       cell.innerHTML=`<div class="ctop"><span class="num">${d}</span></div>
@@ -317,8 +426,8 @@ const GROUPS=[
   {head:"B2C / B2B reps · Oct 2026", range:[6,9]},
   {brk:"Finals / Winter Break · Nov – Dec 2026 — Deepavali 8 Nov · Christmas 25 Dec"},
   {head:"Winter intensive · Jan 2027", range:[10,13]},
-  {brk:"CNY Break · early Feb 2027 — Chinese New Year 6–7 Feb"},
-  {head:"Finals stretch · Feb 2027", range:[14,16]},
+  {brk:"CNY Break · Feb 2027 — Chinese New Year 6–7 Feb · training resumes Sat 20 Feb"},
+  {head:"Finals stretch · Feb 2027", range:[14,15]},
   {brk:"Sem 2 Recess Week · 1 – 5 Mar 2027 — season ends"}
 ];
 let html="";
@@ -335,7 +444,7 @@ function rowHTML(s){
   const wd=dt.toLocaleDateString("en-GB",{weekday:"long"});
   const focus=buf?`<span style="color:var(--buffer);font-weight:600;">Buffer — no session</span>`
     :`<b>${s.morning}</b>${s.afternoon?`<span class="arrow">→</span>${s.afternoon}`:""}`;
-  return `<div class="lrow ${buf?"lbuf":""}">
+  return `<div class="lrow ${buf?"lbuf":""}" data-sno="${buf?"":s.no}">
     <span class="lno">${s.no}</span>
     <div class="ldate">${dd}<small>${wd}</small></div>
     <div class="ltime">${buf?"—":s.time}</div>
@@ -354,8 +463,113 @@ btnList.addEventListener("click",()=>setView(false));
 /* ---------- Footer ---------- */
 document.getElementById("footer").innerHTML=
   "NTU Business Solutions · Year 1 Training Schedule, AY 2026/27. "+
-  "Public holidays and recess weeks follow the NTU academic calendar; in-lieu days marked “replacement”. "+
-  "Case type, case number and remarks omitted by design. Times are SGT and subject to change.";
+  "Public holidays and recess weeks follow the NTU academic calendar; in-lieu days marked "replacement". "+
+  "Case type, case number and remarks omitted by design. Times are SGT and subject to change. "+
+  "Click any training session to add or view session details.";
+
+/* ---------- Modal ---------- */
+let currentSno=null;
+
+function openModal(sno){
+  const s=SESSIONS.find(x=>x.no===sno);
+  if(!s||s.kind==="buffer")return;
+  currentSno=sno;
+  const stored=getStored(sno);
+  const[y,m,d]=s.date.split("-").map(Number);
+  const dt=new Date(y,m-1,d);
+
+  document.getElementById("modal-sno").textContent=`Session ${s.no}`;
+  document.getElementById("modal-date").textContent=
+    dt.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+
+  /* base schedule info */
+  const base=document.getElementById("modal-base");
+  let baseHtml="";
+  if(s.time) baseHtml+=`<div class="mb-time">${s.time}</div>`;
+  if(s.morning&&s.afternoon) baseHtml+=`<div class="mb-focus"><b>AM:</b> ${s.morning} &nbsp;·&nbsp; <b>PM:</b> ${s.afternoon}</div>`;
+  else if(s.morning) baseHtml+=`<div class="mb-focus">${s.morning}</div>`;
+  base.innerHTML=baseHtml||`<span style="color:var(--muted)">Schedule details TBC</span>`;
+
+  /* fill stored fields */
+  document.getElementById("mf-time").value=stored.time||"";
+  document.getElementById("mf-location").value=stored.location||"";
+  document.getElementById("mf-case").value=stored.caseOfWeek||"";
+  document.getElementById("mf-directors").value=stored.directors||"";
+  document.getElementById("mf-remarks").value=stored.remarks||"";
+
+  const modal=document.getElementById("session-modal");
+  modal.style.display="flex";
+  setTimeout(()=>document.getElementById("mf-time").focus(),50);
+}
+
+function closeModal(){
+  document.getElementById("session-modal").style.display="none";
+  currentSno=null;
+}
+
+function saveModal(){
+  if(currentSno===null)return;
+  const data={
+    time:document.getElementById("mf-time").value.trim(),
+    location:document.getElementById("mf-location").value.trim(),
+    caseOfWeek:document.getElementById("mf-case").value.trim(),
+    directors:document.getElementById("mf-directors").value.trim(),
+    remarks:document.getElementById("mf-remarks").value.trim()
+  };
+  setStored(currentSno,data);
+  refreshCellIndicators(currentSno,data);
+  closeModal();
+}
+
+document.getElementById("modal-close").addEventListener("click",closeModal);
+document.getElementById("modal-cancel").addEventListener("click",closeModal);
+document.getElementById("modal-save").addEventListener("click",saveModal);
+document.getElementById("modal-backdrop").addEventListener("click",closeModal);
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape")closeModal();
+  if(e.key==="Enter"&&e.metaKey&&currentSno!==null)saveModal();
+});
+
+/* ---------- Attach click handlers & apply stored indicators ---------- */
+function refreshCellIndicators(sno,data){
+  const hasData=hasAnyData(data);
+  /* calendar cells */
+  document.querySelectorAll(`.cell[data-sno="${sno}"]`).forEach(cell=>{
+    cell.classList.toggle("has-data",hasData);
+    const existing=cell.querySelector(".stored-loc");
+    if(existing)existing.remove();
+    if(hasData&&data.location){
+      const loc=document.createElement("span");
+      loc.className="stored-loc";
+      loc.textContent="📍 "+data.location;
+      cell.querySelector(".cbody").appendChild(loc);
+    }
+  });
+  /* list rows */
+  document.querySelectorAll(`.lrow[data-sno="${sno}"]`).forEach(row=>{
+    row.classList.toggle("has-data",hasData);
+  });
+}
+
+/* on load: attach click events and apply any saved data */
+document.querySelectorAll(".cell.session[data-sno]").forEach(cell=>{
+  const sno=parseInt(cell.dataset.sno,10);
+  cell.addEventListener("click",()=>openModal(sno));
+  const stored=getStored(sno);
+  refreshCellIndicators(sno,stored);
+});
+document.querySelectorAll(".lrow[data-sno]").forEach(row=>{
+  const sno=parseInt(row.dataset.sno,10);
+  if(!sno)return;
+  row.addEventListener("click",()=>openModal(sno));
+});
+/* also refresh list row indicators separately (cells already done above) */
+SESSIONS.filter(s=>s.kind!=="buffer").forEach(s=>{
+  const stored=getStored(s.no);
+  if(hasAnyData(stored)){
+    document.querySelectorAll(`.lrow[data-sno="${s.no}"]`).forEach(r=>r.classList.add("has-data"));
+  }
+});
 </script>
 </body>
 </html>
