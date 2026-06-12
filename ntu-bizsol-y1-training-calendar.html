@@ -546,8 +546,36 @@ h1 {
 }
 
 /* ── Modal EDIT mode ─────────────────────── */
+.type-toggle {
+  display: flex;
+  border: 1.5px solid var(--navy-4);
+  border-radius: var(--radius);
+  overflow: hidden;
+  width: 100%;
+}
+.type-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; font-weight: 500;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  border: 0; background: transparent;
+  color: var(--navy-3);
+  padding: 10px 18px;
+  cursor: pointer;
+  flex: 1;
+  transition: background 0.12s, color 0.12s;
+  border-right: 1.5px solid var(--navy-4);
+}
+.type-btn:last-child  { border-right: 0; }
+.type-btn.active      { background: var(--navy);  color: var(--white); }
+.type-btn.active-buf  { background: var(--royal); color: var(--white); }
+
 .modal-fields {
   padding: 20px 26px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.fields-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px 18px;
@@ -758,25 +786,44 @@ footer {
     <!-- EDIT mode (hidden by default) -->
     <div id="modal-edit-form" style="display:none">
       <div class="modal-fields">
+        <!-- Session type toggle -->
         <div class="mfield">
-          <label for="mf-time">Confirmed Time</label>
-          <input type="text" id="mf-time" placeholder="e.g. 9:00 AM – 5:00 PM" autocomplete="off">
+          <label>Session Type</label>
+          <div class="type-toggle">
+            <button class="type-btn" id="type-session">Training Session</button>
+            <button class="type-btn" id="type-buffer">Buffer &mdash; No Session</button>
+          </div>
         </div>
-        <div class="mfield">
-          <label for="mf-location">Location</label>
-          <input type="text" id="mf-location" placeholder="e.g. NTU LT 7A" autocomplete="off">
-        </div>
-        <div class="mfield full">
-          <label for="mf-case">Case for the Week</label>
-          <input type="text" id="mf-case" placeholder="Case study or focus area for this session" autocomplete="off">
-        </div>
-        <div class="mfield full">
-          <label for="mf-directors">Training Directors Coming</label>
-          <input type="text" id="mf-directors" placeholder="Names, separated by commas" autocomplete="off">
-        </div>
-        <div class="mfield full">
-          <label for="mf-remarks">Remarks</label>
-          <textarea id="mf-remarks" placeholder="Any additional notes, reminders, or changes…"></textarea>
+        <!-- Training fields (hidden when buffer active) -->
+        <div class="fields-grid" id="training-fields">
+          <div class="mfield">
+            <label for="mf-time">Time</label>
+            <input type="text" id="mf-time" placeholder="e.g. 9:00 AM – 12:30 PM" autocomplete="off">
+          </div>
+          <div class="mfield">
+            <label for="mf-location">Location</label>
+            <input type="text" id="mf-location" placeholder="e.g. NTU LT 7A" autocomplete="off">
+          </div>
+          <div class="mfield">
+            <label for="mf-am">AM Content</label>
+            <input type="text" id="mf-am" placeholder="Morning training content" autocomplete="off">
+          </div>
+          <div class="mfield">
+            <label for="mf-pm">PM Content</label>
+            <input type="text" id="mf-pm" placeholder="Afternoon content (blank if none)" autocomplete="off">
+          </div>
+          <div class="mfield full">
+            <label for="mf-case">Case for the Week</label>
+            <input type="text" id="mf-case" placeholder="Case study or focus area" autocomplete="off">
+          </div>
+          <div class="mfield full">
+            <label for="mf-directors">Training Directors Coming</label>
+            <input type="text" id="mf-directors" placeholder="Names, separated by commas" autocomplete="off">
+          </div>
+          <div class="mfield full">
+            <label for="mf-remarks">Remarks</label>
+            <textarea id="mf-remarks" placeholder="Any additional notes, reminders, or changes…"></textarea>
+          </div>
         </div>
       </div>
       <div class="modal-actions">
@@ -789,7 +836,7 @@ footer {
 </div>
 
 <script>
-/* ----- Training sessions ----- */
+/* ===== Training sessions ===== */
 const SESSIONS = [
   {no:1,  date:"2026-08-29", time:"9:00 AM – 5:00 PM",   morning:"Appreciating the case", afternoon:"STI & Sliding"},
   {no:2,  date:"2026-09-05", time:"9:00 AM – 5:00 PM",   morning:"Present STI", afternoon:"Recommendation"},
@@ -822,7 +869,7 @@ const HOLIDAYS = {
   "2026-12-25":{name:"Christmas Day"},
   "2027-2-6":  {name:"Chinese New Year"},
   "2027-2-7":  {name:"Chinese New Year"},
-  "2027-2-8":  {name:"CNY", sub:"replacement", soft:true},
+  "2027-2-8":  {name:"CNY", sub:"in lieu"},
   "2027-3-10": {name:"Hari Raya Puasa", sub:"tentative date"},
   "2027-3-26": {name:"Good Friday"}
 };
@@ -854,7 +901,7 @@ function expand(ranges){const set=new Set();ranges.forEach(([a,b])=>{let d=parse
 function parse(iso){const[y,m,d]=iso.split("-").map(Number);return new Date(y,m-1,d);}
 const recessSet=expand(RECESS_RANGES), breakSet=expand(BREAK_RANGES);
 
-/* ---------- localStorage helpers ---------- */
+/* ===== localStorage helpers ===== */
 function getStored(no){
   try{const r=localStorage.getItem(`bizsol_s${no}`);return r?JSON.parse(r):{};}catch(e){return {};}
 }
@@ -862,10 +909,24 @@ function setStored(no,data){
   try{localStorage.setItem(`bizsol_s${no}`,JSON.stringify(data));}catch(e){}
 }
 function hasAnyData(stored){
-  return stored && Object.values(stored).some(v=>v&&v.trim&&v.trim());
+  return stored&&Object.values(stored).some(v=>typeof v==="string"&&v.trim());
 }
 
-/* ---------- Calendar render ---------- */
+/* ===== Effective-value helper =====
+   Merges stored overrides on top of the base SESSIONS entry.
+   stored.isBuffer overrides s.kind==="buffer" when explicitly set. */
+function getEffective(s,stored){
+  const defBuf=s.kind==="buffer";
+  const effectiveBuf= stored.isBuffer===true  ? true
+                    : stored.isBuffer===false ? false
+                    : defBuf;
+  const effectiveTime= stored.time    || s.time;
+  const effectiveAm  = (stored.amContent!==undefined&&stored.amContent!=="") ? stored.amContent : s.morning;
+  const effectivePm  = (stored.pmContent!==undefined&&stored.pmContent!=="") ? stored.pmContent : s.afternoon;
+  return {effectiveBuf,effectiveTime,effectiveAm,effectivePm};
+}
+
+/* ===== Calendar render ===== */
 const monthsEl=document.getElementById("months");
 MONTHS.forEach(M=>{
   const card=document.createElement("section");
@@ -888,40 +949,47 @@ MONTHS.forEach(M=>{
     const cell=document.createElement("div");
 
     if(s){
-      const buf=s.kind==="buffer";
-      cell.className="cell "+(buf?"buffer":"session");
-      let body;
-      if(buf){
-        body=`<div class="cbody"><span class="time">Buffer · no session</span></div>`;
+      const stored=getStored(s.no);
+      const {effectiveBuf,effectiveTime,effectiveAm,effectivePm}=getEffective(s,stored);
+      cell.dataset.sno=s.no;
+      if(effectiveBuf){
+        cell.className="cell buffer";
+        cell.innerHTML=`<div class="ctop"><span class="num">${d}</span></div>
+          <div class="cbody"><span class="time">Buffer · no session</span></div>`;
       }else{
         let slots="";
-        if(s.morning&&s.afternoon){
+        if(effectiveAm&&effectivePm){
           slots=`<div class="slots">
-            <div class="slot"><span class="lbl">AM</span><span class="txt">${s.morning}</span></div>
-            <div class="slot"><span class="lbl">PM</span><span class="txt">${s.afternoon}</span></div></div>`;
-        }else if(s.morning){
-          slots=`<div class="slots"><div class="slot"><span class="txt">${s.morning}</span></div></div>`;
+            <div class="slot"><span class="lbl">AM</span><span class="txt">${effectiveAm}</span></div>
+            <div class="slot"><span class="lbl">PM</span><span class="txt">${effectivePm}</span></div></div>`;
+        }else if(effectiveAm){
+          slots=`<div class="slots"><div class="slot"><span class="txt">${effectiveAm}</span></div></div>`;
         }
-        body=`<div class="cbody">${s.time?`<span class="time">${s.time}</span>`:""}${slots}</div>`;
-        cell.dataset.sno=s.no;
+        const body=`<div class="cbody">${effectiveTime?`<span class="time">${effectiveTime}</span>`:""}${slots}</div>`;
+        const hasData=hasAnyData(stored);
+        cell.className="cell session"+(hasData?" has-data":"");
+        cell.innerHTML=`<div class="ctop"><span class="num">${d}</span><span class="sno">S${s.no}</span></div>${body}`;
+        if(hasData&&stored.location){
+          const loc=document.createElement("span");loc.className="stored-loc";
+          loc.textContent="📍 "+stored.location;cell.querySelector(".cbody").appendChild(loc);
+        }
       }
-      cell.innerHTML=`<div class="ctop"><span class="num">${d}</span>${buf?'':`<span class="sno">S${s.no}</span>`}</div>${body}`;
-    } else if(evt){
+    }else if(evt){
       cell.className="cell event";
       cell.innerHTML=`<div class="ctop"><span class="num">${d}</span></div>
         <div class="cbody"><span class="event-name">${evt.name}</span>${evt.time?`<span class="event-time">${evt.time}</span>`:""}</div>`;
-    } else if(hol){
+    }else if(hol){
       cell.className="cell holiday"+(hol.soft?" soft":"");
       cell.innerHTML=`<div class="ctop"><span class="num">${d}</span></div>
         <div class="cbody"><span class="hol">${hol.name}${hol.sub?`<small>${hol.sub}</small>`:""}</span></div>`;
-    } else if(recessSet.has(key)){
+    }else if(recessSet.has(key)){
       cell.className="cell recess";
       cell.innerHTML=`<div class="ctop"><span class="num">${d}</span></div>
         <div class="cbody"><span class="rlabel">Recess</span></div>`;
-    } else if(breakSet.has(key)||M.isBreak){
+    }else if(breakSet.has(key)||M.isBreak){
       cell.className="cell brk";
       cell.innerHTML=`<div class="ctop"><span class="num">${d}</span></div>`;
-    } else {
+    }else{
       cell.className="cell off";
       cell.innerHTML=`<div class="ctop"><span class="num">${d}</span></div>`;
     }
@@ -931,7 +999,7 @@ MONTHS.forEach(M=>{
   monthsEl.appendChild(card);
 });
 
-/* ---------- List render ---------- */
+/* ===== List render ===== */
 const listEl=document.getElementById("list");
 const GROUPS=[
   {head:"Season opens · Aug 2026", range:[1,1]},
@@ -944,28 +1012,31 @@ const GROUPS=[
   {head:"Finals stretch · Feb 2027", range:[13,15]},
   {brk:"Sem 2 Recess Week · 1 – 5 Mar 2027 — season ends"}
 ];
-let html="";
-GROUPS.forEach(g=>{
-  if(g.brk){html+=`<div class="lbreak">${g.brk}</div>`;return;}
-  html+=`<div class="lgroup-head">${g.head}</div>`;
-  SESSIONS.filter(s=>s.no>=g.range[0]&&s.no<=g.range[1]).forEach(s=>html+=rowHTML(s));
-});
-listEl.innerHTML=html;
 function rowHTML(s){
-  const buf=s.kind==="buffer";
+  const stored=getStored(s.no);
+  const {effectiveBuf,effectiveTime,effectiveAm,effectivePm}=getEffective(s,stored);
   const[y,m,d]=s.date.split("-").map(Number);const dt=new Date(y,m-1,d);
   const dd=dt.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
   const wd=dt.toLocaleDateString("en-GB",{weekday:"long"});
-  const focus=buf?`<span style="color:var(--buffer);font-weight:600;">Buffer — no session</span>`
-    :`<b>${s.morning}</b>${s.afternoon?`<span class="arrow">→</span>${s.afternoon}`:""}`;
-  return `<div class="lrow ${buf?"lbuf":""}" data-sno="${buf?"":s.no}">
-    <span class="lno">${buf?"—":s.no}</span>
+  const hasData=!effectiveBuf&&hasAnyData(stored);
+  const focus=effectiveBuf
+    ?`<span style="color:var(--buffer);font-weight:600;">Buffer — no session</span>`
+    :`<b>${effectiveAm||""}</b>${effectivePm?`<span class="arrow">→</span>${effectivePm}`:""}`;
+  return `<div class="lrow ${effectiveBuf?"lbuf":""} ${hasData?"has-data":""}" data-sno="${s.no}">
+    <span class="lno">${effectiveBuf?"—":s.no}</span>
     <div class="ldate">${dd}<small>${wd}</small></div>
-    <div class="ltime">${buf?"—":s.time}</div>
+    <div class="ltime">${effectiveBuf?"—":(effectiveTime||"—")}</div>
     <div class="lfocus">${focus}</div></div>`;
 }
+let listHtml="";
+GROUPS.forEach(g=>{
+  if(g.brk){listHtml+=`<div class="lbreak">${g.brk}</div>`;return;}
+  listHtml+=`<div class="lgroup-head">${g.head}</div>`;
+  SESSIONS.filter(s=>s.no>=g.range[0]&&s.no<=g.range[1]).forEach(s=>listHtml+=rowHTML(s));
+});
+listEl.innerHTML=listHtml;
 
-/* ---------- View toggle ---------- */
+/* ===== View toggle ===== */
 const btnCal=document.getElementById("btnCal"),btnList=document.getElementById("btnList");
 function setView(cal){
   btnCal.setAttribute("aria-pressed",cal);btnList.setAttribute("aria-pressed",!cal);
@@ -974,63 +1045,79 @@ function setView(cal){
 btnCal.addEventListener("click",()=>setView(true));
 btnList.addEventListener("click",()=>setView(false));
 
-/* ---------- Footer ---------- */
+/* ===== Footer ===== */
 document.getElementById("footer").innerHTML=
   "NTU Business Solutions · Year 1 Training Schedule, AY 2026/27. "+
   "Public holidays and recess weeks follow the NTU academic calendar; in-lieu days marked “replacement”. "+
   "Case type, case number and remarks omitted by design. Times are SGT and subject to change. "+
-  "Click any training session to view or edit session details.";
+  "Click any training session or buffer slot to view or edit details.";
 
-/* ---------- Modal ---------- */
-let currentSno=null;
+/* ===== Modal ===== */
+let currentSno=null, editIsBuffer=false;
 
 function setVal(id,val){
   const el=document.getElementById(id);
-  if(val&&val.trim()){el.textContent=val;el.classList.remove("empty");}
+  if(val&&String(val).trim()){el.textContent=val;el.classList.remove("empty");}
   else{el.textContent="—";el.classList.add("empty");}
+}
+
+function populateModalView(s,stored){
+  const {effectiveBuf,effectiveTime,effectiveAm,effectivePm}=getEffective(s,stored);
+  document.getElementById("modal-sno").textContent=effectiveBuf?"Buffer · no session":`Session ${s.no}`;
+  const[y,m,d]=s.date.split("-").map(Number);
+  document.getElementById("modal-date").textContent=
+    new Date(y,m-1,d).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  const base=document.getElementById("modal-base");
+  if(effectiveBuf){
+    base.innerHTML=`<span style="color:rgba(3,10,140,0.65);font-weight:600;font-family:'IBM Plex Mono',monospace;font-size:11.5px;">Buffer — no training scheduled</span>`;
+  }else{
+    let h="";
+    if(effectiveTime) h+=`<div class="mb-time">${effectiveTime}</div>`;
+    if(effectiveAm&&effectivePm) h+=`<div class="mb-focus"><b>AM:</b> ${effectiveAm} &nbsp;·&nbsp; <b>PM:</b> ${effectivePm}</div>`;
+    else if(effectiveAm) h+=`<div class="mb-focus">${effectiveAm}</div>`;
+    base.innerHTML=h||`<span style="color:var(--muted)">Schedule details TBC</span>`;
+  }
+  setVal("vi-time", effectiveBuf?null:effectiveTime);
+  setVal("vi-loc",  effectiveBuf?null:stored.location);
+  setVal("vi-case", effectiveBuf?null:stored.caseOfWeek);
+  setVal("vi-dir",  effectiveBuf?null:stored.directors);
+  setVal("vi-rem",  stored.remarks);
 }
 
 function openModal(sno){
   const s=SESSIONS.find(x=>x.no===sno);
-  if(!s||s.kind==="buffer")return;
+  if(!s)return;
   currentSno=sno;
-  const stored=getStored(sno);
-  const[y,m,d]=s.date.split("-").map(Number);
-  const dt=new Date(y,m-1,d);
-
-  document.getElementById("modal-sno").textContent=`Session ${s.no}`;
-  document.getElementById("modal-date").textContent=
-    dt.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
-
-  const base=document.getElementById("modal-base");
-  let baseHtml="";
-  if(s.time) baseHtml+=`<div class="mb-time">${s.time}</div>`;
-  if(s.morning&&s.afternoon) baseHtml+=`<div class="mb-focus"><b>AM:</b> ${s.morning} &nbsp;·&nbsp; <b>PM:</b> ${s.afternoon}</div>`;
-  else if(s.morning) baseHtml+=`<div class="mb-focus">${s.morning}</div>`;
-  base.innerHTML=baseHtml||`<span style="color:var(--muted)">Schedule details TBC</span>`;
-
-  /* populate view mode */
-  setVal("vi-time", stored.time);
-  setVal("vi-loc",  stored.location);
-  setVal("vi-case", stored.caseOfWeek);
-  setVal("vi-dir",  stored.directors);
-  setVal("vi-rem",  stored.remarks);
-
-  /* show view mode */
+  populateModalView(s,getStored(sno));
   document.getElementById("modal-view").style.display="";
   document.getElementById("modal-edit-form").style.display="none";
-
   document.getElementById("session-modal").style.display="flex";
 }
 
+function applyTypeToggle(isBuf){
+  editIsBuffer=isBuf;
+  document.getElementById("type-session").classList.toggle("active",!isBuf);
+  document.getElementById("type-buffer").classList.toggle("active-buf",isBuf);
+  document.getElementById("training-fields").style.display=isBuf?"none":"";
+}
+
 function openEditMode(){
+  const s=SESSIONS.find(x=>x.no===currentSno);
   const stored=getStored(currentSno);
-  document.getElementById("mf-time").value=stored.time||"";
+  const {effectiveBuf}=getEffective(s,stored);
+  applyTypeToggle(effectiveBuf);
+  const tf=document.getElementById("mf-time");
+  tf.value=stored.time||""; tf.placeholder=s.time||"e.g. 9:00 AM – 12:30 PM";
+  const af=document.getElementById("mf-am");
+  af.value=stored.amContent!==undefined?stored.amContent:(s.morning||"");
+  af.placeholder=s.morning||"Morning training content";
+  const pf=document.getElementById("mf-pm");
+  pf.value=stored.pmContent!==undefined?stored.pmContent:(s.afternoon||"");
+  pf.placeholder=s.afternoon||"Afternoon content (blank if none)";
   document.getElementById("mf-location").value=stored.location||"";
   document.getElementById("mf-case").value=stored.caseOfWeek||"";
   document.getElementById("mf-directors").value=stored.directors||"";
   document.getElementById("mf-remarks").value=stored.remarks||"";
-
   document.getElementById("modal-view").style.display="none";
   document.getElementById("modal-edit-form").style.display="";
   setTimeout(()=>document.getElementById("mf-time").focus(),50);
@@ -1043,30 +1130,77 @@ function closeModal(){
 
 function saveModal(){
   if(currentSno===null)return;
+  const s=SESSIONS.find(x=>x.no===currentSno);
+  const isDefaultBuf=s.kind==="buffer";
   const data={
-    time:document.getElementById("mf-time").value.trim(),
-    location:document.getElementById("mf-location").value.trim(),
-    caseOfWeek:document.getElementById("mf-case").value.trim(),
-    directors:document.getElementById("mf-directors").value.trim(),
-    remarks:document.getElementById("mf-remarks").value.trim()
+    time:       document.getElementById("mf-time").value.trim(),
+    amContent:  document.getElementById("mf-am").value.trim(),
+    pmContent:  document.getElementById("mf-pm").value.trim(),
+    location:   document.getElementById("mf-location").value.trim(),
+    caseOfWeek: document.getElementById("mf-case").value.trim(),
+    directors:  document.getElementById("mf-directors").value.trim(),
+    remarks:    document.getElementById("mf-remarks").value.trim()
   };
+  if(editIsBuffer!==isDefaultBuf) data.isBuffer=editIsBuffer;
   setStored(currentSno,data);
-  refreshCellIndicators(currentSno,data);
-
-  /* update view fields and return to view mode */
-  setVal("vi-time", data.time);
-  setVal("vi-loc",  data.location);
-  setVal("vi-case", data.caseOfWeek);
-  setVal("vi-dir",  data.directors);
-  setVal("vi-rem",  data.remarks);
+  refreshCellFull(currentSno);
+  populateModalView(s,data);
   document.getElementById("modal-view").style.display="";
   document.getElementById("modal-edit-form").style.display="none";
 }
 
+/* ===== Full cell + list-row refresh after save ===== */
+function refreshCellFull(sno){
+  const s=SESSIONS.find(x=>x.no===sno);if(!s)return;
+  const stored=getStored(sno);
+  const {effectiveBuf,effectiveTime,effectiveAm,effectivePm}=getEffective(s,stored);
+  const hasData=!effectiveBuf&&hasAnyData(stored);
+  document.querySelectorAll(`.cell[data-sno="${sno}"]`).forEach(cell=>{
+    const d=cell.querySelector(".num").textContent;
+    if(effectiveBuf){
+      cell.className="cell buffer";
+      cell.innerHTML=`<div class="ctop"><span class="num">${d}</span></div>
+        <div class="cbody"><span class="time">Buffer · no session</span></div>`;
+    }else{
+      let slots="";
+      if(effectiveAm&&effectivePm){
+        slots=`<div class="slots">
+          <div class="slot"><span class="lbl">AM</span><span class="txt">${effectiveAm}</span></div>
+          <div class="slot"><span class="lbl">PM</span><span class="txt">${effectivePm}</span></div></div>`;
+      }else if(effectiveAm){
+        slots=`<div class="slots"><div class="slot"><span class="txt">${effectiveAm}</span></div></div>`;
+      }
+      const body=`<div class="cbody">${effectiveTime?`<span class="time">${effectiveTime}</span>`:""}${slots}</div>`;
+      cell.className="cell session"+(hasData?" has-data":"");
+      cell.innerHTML=`<div class="ctop"><span class="num">${d}</span><span class="sno">S${s.no}</span></div>${body}`;
+      if(hasData&&stored.location){
+        const loc=document.createElement("span");loc.className="stored-loc";
+        loc.textContent="📍 "+stored.location;cell.querySelector(".cbody").appendChild(loc);
+      }
+    }
+    cell.onclick=()=>openModal(sno);
+  });
+  document.querySelectorAll(`.lrow[data-sno="${sno}"]`).forEach(row=>{
+    row.classList.toggle("has-data",hasData);
+    row.classList.toggle("lbuf",effectiveBuf);
+    const lno=row.querySelector(".lno");if(lno)lno.textContent=effectiveBuf?"—":s.no;
+    const lt=row.querySelector(".ltime");
+    if(lt){lt.textContent=effectiveBuf?"—":(effectiveTime||"—");lt.style.color=effectiveBuf?"rgba(3,10,140,0.5)":"";}
+    const lf=row.querySelector(".lfocus");
+    if(lf){lf.innerHTML=effectiveBuf
+      ?`<span style="color:var(--buffer);font-weight:600;">Buffer — no session</span>`
+      :`<b>${effectiveAm||""}</b>${effectivePm?`<span class="arrow">→</span>${effectivePm}`:""}`;}
+    row.onclick=effectiveBuf?null:()=>openModal(sno);
+  });
+}
+
+/* ===== Event listeners ===== */
 document.getElementById("modal-close").addEventListener("click",closeModal);
 document.getElementById("modal-close-view").addEventListener("click",closeModal);
 document.getElementById("modal-backdrop").addEventListener("click",closeModal);
 document.getElementById("modal-edit-btn").addEventListener("click",openEditMode);
+document.getElementById("type-session").addEventListener("click",()=>applyTypeToggle(false));
+document.getElementById("type-buffer").addEventListener("click",()=>applyTypeToggle(true));
 document.getElementById("modal-cancel").addEventListener("click",()=>{
   document.getElementById("modal-view").style.display="";
   document.getElementById("modal-edit-form").style.display="none";
@@ -1074,47 +1208,21 @@ document.getElementById("modal-cancel").addEventListener("click",()=>{
 document.getElementById("modal-save").addEventListener("click",saveModal);
 document.addEventListener("keydown",e=>{
   if(e.key==="Escape")closeModal();
-  if(e.key==="Enter"&&e.metaKey&&currentSno!==null){
-    if(document.getElementById("modal-edit-form").style.display!=="none") saveModal();
-  }
+  if(e.key==="Enter"&&e.metaKey&&currentSno!==null&&
+     document.getElementById("modal-edit-form").style.display!=="none") saveModal();
 });
 
-/* ---------- Attach click handlers & apply stored indicators ---------- */
-function refreshCellIndicators(sno,data){
-  const hasData=hasAnyData(data);
-  document.querySelectorAll(`.cell[data-sno="${sno}"]`).forEach(cell=>{
-    cell.classList.toggle("has-data",hasData);
-    const existing=cell.querySelector(".stored-loc");
-    if(existing)existing.remove();
-    if(hasData&&data.location){
-      const loc=document.createElement("span");
-      loc.className="stored-loc";
-      loc.textContent="📍 "+data.location;
-      cell.querySelector(".cbody").appendChild(loc);
-    }
-  });
-  document.querySelectorAll(`.lrow[data-sno="${sno}"]`).forEach(row=>{
-    row.classList.toggle("has-data",hasData);
-  });
-}
-
-document.querySelectorAll(".cell.session[data-sno]").forEach(cell=>{
+/* ===== Attach click handlers to all session + buffer cells ===== */
+document.querySelectorAll(".cell[data-sno]").forEach(cell=>{
   const sno=parseInt(cell.dataset.sno,10);
-  cell.addEventListener("click",()=>openModal(sno));
-  const stored=getStored(sno);
-  refreshCellIndicators(sno,stored);
+  cell.onclick=()=>openModal(sno);
 });
 document.querySelectorAll(".lrow[data-sno]").forEach(row=>{
   const sno=parseInt(row.dataset.sno,10);
-  if(!sno)return;
-  row.addEventListener("click",()=>openModal(sno));
+  if(!sno||row.classList.contains("lbuf"))return;
+  row.onclick=()=>openModal(sno);
 });
-SESSIONS.filter(s=>s.kind!=="buffer").forEach(s=>{
-  const stored=getStored(s.no);
-  if(hasAnyData(stored)){
-    document.querySelectorAll(`.lrow[data-sno="${s.no}"]`).forEach(r=>r.classList.add("has-data"));
-  }
-});
+
 </script>
 </body>
 </html>
