@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Year 1 Training Calendar · NTU Business Solutions · AY 2026/27</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16243F; --ink-soft:#3A4760;
+    --paper:#F6F3EC; --card:#FFFFFF; --line:#E7E2D7;
+    --muted:#94907F; --muted-soft:#BBB6A6;
+    --go:#2F7A57; --go-deep:#256348; --go-soft:#E6F0EA; --go-line:#CADED2;
+    --buffer:#C57F22; --buffer-soft:#FBEEDA; --buffer-line:#F0D9B6;
+    --scarlet:#C8102E; --scarlet-soft:#FBE7EA; --scarlet-line:#F2CBD1;
+    --break-bg:#EFEDE5;
+    --radius:14px;
+    --shadow:0 1px 2px rgba(22,36,63,.04), 0 8px 24px rgba(22,36,63,.06);
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-feature-settings:"tnum" 1,"ss01" 1; line-height:1.45;
+    padding:clamp(16px,3.5vw,44px); overflow-x:hidden;
+  }
+  .wrap{max-width:1080px;margin:0 auto;}
+
+  /* Header */
+  header.masthead{border-bottom:2px solid var(--ink);padding-bottom:20px;}
+  .eyebrow{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--scarlet);font-weight:600;margin:0 0 6px;}
+  h1{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:clamp(30px,5.2vw,52px);line-height:1.02;margin:0 0 14px;letter-spacing:-.01em;}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 22px;align-items:baseline;font-size:13.5px;color:var(--ink-soft);}
+  .meta b{font-weight:600;color:var(--ink);}
+  .meta .dot{color:var(--muted-soft);}
+
+  /* Legend + toggle */
+  .bar{display:flex;flex-wrap:wrap;gap:14px 26px;align-items:center;justify-content:space-between;margin:22px 0 26px;}
+  .legend{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;font-size:12.5px;color:var(--ink-soft);}
+  .legend .item{display:inline-flex;align-items:center;gap:7px;}
+  .swatch{width:14px;height:14px;border-radius:4px;display:inline-block;flex:none;position:relative;}
+  .swatch.go{background:var(--go-soft);border:1.5px solid var(--go);}
+  .swatch.buf{background:var(--buffer-soft);border:1.5px solid var(--buffer);}
+  .swatch.hol{background:var(--scarlet-soft);border:1.5px solid var(--scarlet);}
+  .swatch.rec{background:var(--break-bg);border:1px dashed var(--muted);}
+  .swatch.brk{background:var(--break-bg);border:1px solid var(--line);}
+
+  .toggle{display:inline-flex;border:1px solid var(--line);border-radius:999px;background:var(--card);padding:3px;box-shadow:var(--shadow);}
+  .toggle button{font:inherit;font-size:13px;font-weight:600;color:var(--muted);border:0;background:transparent;padding:7px 16px;border-radius:999px;cursor:pointer;transition:background .15s,color .15s;}
+  .toggle button[aria-pressed="true"]{background:var(--ink);color:#fff;}
+  .toggle button:focus-visible{outline:2px solid var(--scarlet);outline-offset:2px;}
+
+  /* ---- Months: one full-width month per row ---- */
+  .months{display:flex;flex-direction:column;gap:20px;}
+  .month{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 22px 24px;min-width:0;}
+  .month.is-break{background:var(--break-bg);box-shadow:none;}
+  .month-head{display:flex;align-items:baseline;gap:12px;margin-bottom:4px;flex-wrap:wrap;}
+  .month-name{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:26px;letter-spacing:-.01em;}
+  .month-name span{color:var(--muted);font-weight:400;}
+  .ribbon{font-size:12px;color:var(--ink-soft);margin:2px 0 14px;font-weight:500;}
+  .ribbon b{color:var(--ink);font-weight:600;}
+
+  .dow{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin:10px 0 6px;min-width:0;}
+  .dow span{text-align:left;font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--muted);padding-left:2px;}
+  .dow span.sat{color:var(--go);}
+
+  .grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;min-width:0;}
+  .cell{min-width:0;min-height:96px;border-radius:11px;padding:8px 9px;display:flex;flex-direction:column;gap:5px;position:relative;}
+  .cell.empty{visibility:hidden;}
+  .ctop{display:flex;align-items:flex-start;justify-content:space-between;gap:6px;}
+  .num{font-size:14px;font-weight:600;color:var(--muted-soft);line-height:1;}
+  .sno{font-size:10px;font-weight:700;letter-spacing:.02em;line-height:1;}
+  .cbody{display:flex;flex-direction:column;gap:5px;min-width:0;}
+
+  .cell.off .num{color:#A8A395;}
+  .cell.brk{background:var(--break-bg);}
+  .cell.brk .num{color:var(--muted);}
+
+  /* recess week */
+  .cell.recess{background:var(--break-bg);border:1px dashed var(--muted-soft);}
+  .cell.recess .num{color:var(--muted);}
+  .cell.recess .rlabel{font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;}
+
+  /* training session */
+  .cell.session{background:var(--go-soft);border:1.5px solid var(--go-line);}
+  .cell.session .num{color:var(--go);font-weight:700;font-size:16px;}
+  .cell.session .sno{color:var(--go);opacity:.7;}
+  .cell.session .time{font-size:11px;font-weight:600;color:var(--go-deep);background:#fff;border:1px solid var(--go-line);border-radius:6px;padding:2px 6px;display:inline-block;width:fit-content;max-width:100%;}
+  .cell.session .slots{display:flex;flex-direction:column;gap:4px;}
+  .cell.session .slot{display:flex;gap:6px;align-items:baseline;font-size:11.5px;color:var(--go-deep);font-weight:600;line-height:1.25;min-width:0;}
+  .cell.session .slot .lbl{font-size:8.5px;font-weight:700;letter-spacing:.05em;color:var(--go);background:#fff;border:1px solid var(--go-line);border-radius:4px;padding:1px 5px;flex:none;align-self:flex-start;margin-top:1px;}
+  .cell.session .slot .txt{min-width:0;}
+
+  /* buffer */
+  .cell.buffer{background:var(--buffer-soft);border:1.5px solid var(--buffer-line);}
+  .cell.buffer .num{color:var(--buffer);font-weight:700;font-size:16px;}
+  .cell.buffer .sno{color:var(--buffer);opacity:.7;}
+  .cell.buffer .time{font-size:11px;font-weight:600;color:var(--buffer);}
+
+  /* public holiday */
+  .cell.holiday{background:var(--scarlet-soft);border:1.5px solid var(--scarlet-line);}
+  .cell.holiday .num{color:var(--scarlet);font-weight:700;font-size:16px;}
+  .cell.holiday .hol{font-size:10.5px;font-weight:600;color:var(--scarlet);line-height:1.25;}
+  .cell.holiday.soft{background:#FBF1F2;}
+  .cell.holiday.soft .num{color:#B0626C;}
+  .cell.holiday.soft .hol{color:#B0626C;font-weight:500;}
+  .cell.holiday .hol small{display:block;font-weight:500;color:#B0626C;font-size:9.5px;}
+
+  /* List view */
+  .list{display:none;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+  .list.show{display:block;}
+  .months.hide{display:none;}
+  .lgroup-head{background:var(--ink);color:#fff;font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:15px;padding:11px 20px;letter-spacing:.01em;}
+  .lbreak{background:var(--break-bg);color:var(--ink-soft);font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:9px 20px;text-align:center;border-bottom:1px solid var(--line);}
+  .lrow{display:grid;grid-template-columns:54px 132px 132px 1fr;gap:16px;align-items:center;padding:13px 20px;border-bottom:1px solid var(--line);}
+  .lrow:last-child{border-bottom:0;}
+  .lrow .lno{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:9px;background:var(--go-soft);border:1.5px solid var(--go-line);color:var(--go);font-weight:700;font-size:14px;}
+  .lrow.lbuf .lno{background:var(--buffer-soft);border-color:var(--buffer-line);color:var(--buffer);}
+  .lrow .ldate{font-weight:600;font-size:14px;}
+  .lrow .ldate small{display:block;color:var(--muted);font-weight:500;font-size:11.5px;}
+  .lrow .ltime{font-size:12.5px;font-weight:600;color:var(--go-deep);}
+  .lrow.lbuf .ltime{color:var(--buffer);}
+  .lrow .lfocus{font-size:13px;color:var(--ink-soft);}
+  .lrow .lfocus b{color:var(--ink);font-weight:600;}
+  .lrow .lfocus .arrow{color:var(--muted-soft);margin:0 6px;}
+
+  footer{margin-top:30px;border-top:1px solid var(--line);padding-top:16px;font-size:11.5px;color:var(--muted);}
+
+  @media (max-width:720px){
+    .cell{min-height:80px;padding:6px 7px;}
+    .cell.session .time{font-size:10px;padding:1px 4px;}
+    .cell.session .slot{font-size:10.5px;}
+    .num{font-size:13px;}
+    .cell.session .num,.cell.buffer .num,.cell.holiday .num{font-size:14px;}
+  }
+  @media (max-width:520px){
+    .cell{min-height:58px;}
+    .cell.session .slots,.cell.session .time{display:none;}
+    .ribbon{font-size:11px;}
+    .lrow{grid-template-columns:44px 1fr;gap:10px 12px;}
+    .lrow .ltime{grid-column:2;}
+    .lrow .lfocus{grid-column:1 / -1;}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">NTU Business Solutions · Training Season</p>
+    <h1>Year 1 Training Calendar</h1>
+    <div class="meta">
+      <span><b>AY 2026/27</b></span><span class="dot">·</span>
+      <span><b>14</b> training sessions</span><span class="dot">·</span>
+      <span>29 Aug 2026 &ndash; 27 Feb 2027</span><span class="dot">·</span>
+      <span>Saturdays unless noted</span>
+    </div>
+  </header>
+
+  <div class="bar">
+    <div class="legend">
+      <span class="item"><span class="swatch go"></span>Training session</span>
+      <span class="item"><span class="swatch buf"></span>Buffer &mdash; no session</span>
+      <span class="item"><span class="swatch hol"></span>Public holiday</span>
+      <span class="item"><span class="swatch rec"></span>Recess week</span>
+      <span class="item"><span class="swatch brk"></span>Break</span>
+    </div>
+    <div class="toggle" role="group" aria-label="Choose view">
+      <button id="btnCal" aria-pressed="true">Calendar</button>
+      <button id="btnList" aria-pressed="false">List</button>
+    </div>
+  </div>
+
+  <div class="months" id="months"></div>
+  <div class="list" id="list"></div>
+
+  <footer id="footer"></footer>
+</div>
+
+<script>
+/* ----- Training sessions (case type / case no. / remarks omitted) ----- */
+const SESSIONS = [
+  {no:1,  date:"2026-08-29", time:null,                 morning:null, afternoon:null, kind:"buffer"},
+  {no:2,  date:"2026-09-05", time:"9:00 AM – 5:00 PM",  morning:"Appreciating the case", afternoon:"STI & Sliding"},
+  {no:3,  date:"2026-09-12", time:"9:00 AM – 5:00 PM",  morning:"Present STI", afternoon:"Recommendation"},
+  {no:4,  date:"2026-09-19", time:"9:00 AM – 5:00 PM",  morning:"Present STI + Rec.", afternoon:"Finance"},
+  {no:5,  date:"2026-09-26", time:"9:00 AM – 12:30 PM", morning:"Present case", afternoon:null},
+  {no:6,  date:"2026-10-04", time:null,                 morning:null, afternoon:null, kind:"buffer"},
+  {no:7,  date:"2026-10-10", time:"9:00 AM – 12:30 PM", morning:"Present case", afternoon:null},
+  {no:8,  date:"2026-10-17", time:"9:00 AM – 12:30 PM", morning:"Present case", afternoon:null},
+  {no:9,  date:"2026-10-24", time:"9:00 AM – 12:30 PM", morning:"Present case", afternoon:null},
+  {no:10, date:"2027-01-09", time:"9:00 AM – 5:00 PM",  morning:"24hr presentation", afternoon:"Component training"},
+  {no:11, date:"2027-01-16", time:"9:00 AM – 5:00 PM",  morning:"Present case", afternoon:"Component refresher"},
+  {no:12, date:"2027-01-23", time:"9:00 AM – 12:30 PM", morning:"Present case", afternoon:null},
+  {no:13, date:"2027-01-30", time:"8:00 AM – 7:30 PM",  morning:"7-hr case · 0800–1500", afternoon:"Present · 1530–1930"},
+  {no:14, date:"2027-02-13", time:"9:00 AM – 4:00 PM",  morning:"Present case", afternoon:"Tactics"},
+  {no:15, date:"2027-02-20", time:"9:00 AM – 12:30 PM", morning:"Present case", afternoon:null},
+  {no:16, date:"2027-02-27", time:"TBC",                morning:"24hr finale / week-long case", afternoon:null}
+];
+
+/* ----- Singapore public holidays (per NTU academic calendar, in range) ----- */
+const HOLIDAYS = {
+  "2026-8-9":  {name:"National Day"},
+  "2026-8-10": {name:"National Day", sub:"replacement", soft:true},
+  "2026-11-8": {name:"Deepavali"},
+  "2026-11-9": {name:"Deepavali", sub:"replacement", soft:true},
+  "2026-12-25":{name:"Christmas Day"},
+  "2027-2-6":  {name:"Chinese New Year"},
+  "2027-2-7":  {name:"Chinese New Year"},
+  "2027-2-8":  {name:"CNY", sub:"replacement", soft:true},
+  "2027-3-10": {name:"Hari Raya Puasa", sub:"tentative date"},
+  "2027-3-26": {name:"Good Friday"}
+};
+
+/* ----- Recess weeks (dashed) and general breaks (grey) ----- */
+const RECESS_RANGES = [
+  ["2026-09-28","2026-10-02"],   // Sem 1 recess week
+  ["2027-03-01","2027-03-05"]    // Sem 2 recess week
+];
+const BREAK_RANGES = [
+  ["2026-10-25","2026-10-31"],   // start of finals / winter break
+  ["2027-01-01","2027-01-08"],   // tail of winter break
+  ["2027-02-01","2027-02-12"]    // CNY break (holidays drawn on top)
+];
+
+const MONTHS = [
+  {y:2026,m:7},
+  {y:2026,m:8,  ribbon:"<b>Sem 1 recess week</b> · 28 Sep – 2 Oct"},
+  {y:2026,m:9},
+  {y:2026,m:10, isBreak:true, ribbon:"No training · <b>Deepavali</b> 8 Nov · 24-hr case to be done over the break"},
+  {y:2026,m:11, isBreak:true, ribbon:"No training · <b>Christmas Day</b> 25 Dec"},
+  {y:2027,m:0},
+  {y:2027,m:1,  ribbon:"<b>Chinese New Year</b> 6–7 Feb · training resumes Sat 13 Feb"},
+  {y:2027,m:2,  ribbon:"<b>Sem 2 recess week</b> · 1 – 5 Mar · training season has ended"}
+];
+
+const DOW=["S","M","T","W","T","F","S"];
+const MN=["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+/* lookup maps */
+const sMap={}; SESSIONS.forEach(s=>{const[y,m,d]=s.date.split("-").map(Number);sMap[`${y}-${m}-${d}`]=s;});
+function expand(ranges){const set=new Set();ranges.forEach(([a,b])=>{let d=parse(a),e=parse(b);while(d<=e){set.add(`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`);d.setDate(d.getDate()+1);}});return set;}
+function parse(iso){const[y,m,d]=iso.split("-").map(Number);return new Date(y,m-1,d);}
+const recessSet=expand(RECESS_RANGES), breakSet=expand(BREAK_RANGES);
+
+/* ---------- Calendar render ---------- */
+const monthsEl=document.getElementById("months");
+MONTHS.forEach(M=>{
+  const card=document.createElement("section");
+  card.className="month"+(M.isBreak?" is-break":"");
+  card.innerHTML=`<div class="month-head"><div class="month-name">${MN[M.m]} <span>${M.y}</span></div></div>`
+    +(M.ribbon?`<p class="ribbon">${M.ribbon}</p>`:"");
+
+  const dow=document.createElement("div");dow.className="dow";
+  DOW.forEach((d,i)=>{const sp=document.createElement("span");sp.textContent=d;if(i===6)sp.className="sat";dow.appendChild(sp);});
+  card.appendChild(dow);
+
+  const grid=document.createElement("div");grid.className="grid";
+  const first=new Date(M.y,M.m,1).getDay();
+  const days=new Date(M.y,M.m+1,0).getDate();
+  for(let i=0;i<first;i++){const e=document.createElement("div");e.className="cell empty";grid.appendChild(e);}
+
+  for(let d=1;d<=days;d++){
+    const key=`${M.y}-${M.m+1}-${d}`;
+    const s=sMap[key], hol=HOLIDAYS[key];
+    const cell=document.createElement("div");
+
+    if(s){
+      const buf=s.kind==="buffer";
+      cell.className="cell "+(buf?"buffer":"session");
+      let body;
+      if(buf){
+        body=`<div class="cbody"><span class="time">Buffer · no session</span></div>`;
+      }else{
+        let slots="";
+        if(s.morning&&s.afternoon){
+          slots=`<div class="slots">
+            <div class="slot"><span class="lbl">AM</span><span class="txt">${s.morning}</span></div>
+            <div class="slot"><span class="lbl">PM</span><span class="txt">${s.afternoon}</span></div></div>`;
+        }else if(s.morning){
+          slots=`<div class="slots"><div class="slot"><span class="txt">${s.morning}</span></div></div>`;
+        }
+        body=`<div class="cbody">${s.time?`<span class="time">${s.time}</span>`:""}${slots}</div>`;
+      }
+      cell.innerHTML=`<div class="ctop"><span class="num">${d}</span><span class="sno">S${s.no}</span></div>${body}`;
+    } else if(hol){
+      cell.className="cell holiday"+(hol.soft?" soft":"");
+      cell.innerHTML=`<div class="ctop"><span class="num">${d}</span></div>
+        <div class="cbody"><span class="hol">${hol.name}${hol.sub?`<small>${hol.sub}</small>`:""}</span></div>`;
+    } else if(recessSet.has(key)){
+      cell.className="cell recess";
+      cell.innerHTML=`<div class="ctop"><span class="num">${d}</span></div>
+        <div class="cbody"><span class="rlabel">Recess</span></div>`;
+    } else if(breakSet.has(key)||M.isBreak){
+      cell.className="cell brk";
+      cell.innerHTML=`<div class="ctop"><span class="num">${d}</span></div>`;
+    } else {
+      cell.className="cell off";
+      cell.innerHTML=`<div class="ctop"><span class="num">${d}</span></div>`;
+    }
+    grid.appendChild(cell);
+  }
+  card.appendChild(grid);
+  monthsEl.appendChild(card);
+});
+
+/* ---------- List render ---------- */
+const listEl=document.getElementById("list");
+const GROUPS=[
+  {head:"Season opens · Aug 2026", range:[1,1]},
+  {head:"Foundations · Sep 2026", range:[2,5]},
+  {brk:"Sem 1 Recess Week · 28 Sep – 2 Oct"},
+  {head:"B2C / B2B reps · Oct 2026", range:[6,9]},
+  {brk:"Finals / Winter Break · Nov – Dec 2026 — Deepavali 8 Nov · Christmas 25 Dec"},
+  {head:"Winter intensive · Jan 2027", range:[10,13]},
+  {brk:"CNY Break · early Feb 2027 — Chinese New Year 6–7 Feb"},
+  {head:"Finals stretch · Feb 2027", range:[14,16]},
+  {brk:"Sem 2 Recess Week · 1 – 5 Mar 2027 — season ends"}
+];
+let html="";
+GROUPS.forEach(g=>{
+  if(g.brk){html+=`<div class="lbreak">${g.brk}</div>`;return;}
+  html+=`<div class="lgroup-head">${g.head}</div>`;
+  SESSIONS.filter(s=>s.no>=g.range[0]&&s.no<=g.range[1]).forEach(s=>html+=rowHTML(s));
+});
+listEl.innerHTML=html;
+function rowHTML(s){
+  const buf=s.kind==="buffer";
+  const[y,m,d]=s.date.split("-").map(Number);const dt=new Date(y,m-1,d);
+  const dd=dt.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
+  const wd=dt.toLocaleDateString("en-GB",{weekday:"long"});
+  const focus=buf?`<span style="color:var(--buffer);font-weight:600;">Buffer — no session</span>`
+    :`<b>${s.morning}</b>${s.afternoon?`<span class="arrow">→</span>${s.afternoon}`:""}`;
+  return `<div class="lrow ${buf?"lbuf":""}">
+    <span class="lno">${s.no}</span>
+    <div class="ldate">${dd}<small>${wd}</small></div>
+    <div class="ltime">${buf?"—":s.time}</div>
+    <div class="lfocus">${focus}</div></div>`;
+}
+
+/* ---------- View toggle ---------- */
+const btnCal=document.getElementById("btnCal"),btnList=document.getElementById("btnList");
+function setView(cal){
+  btnCal.setAttribute("aria-pressed",cal);btnList.setAttribute("aria-pressed",!cal);
+  monthsEl.classList.toggle("hide",!cal);listEl.classList.toggle("show",!cal);
+}
+btnCal.addEventListener("click",()=>setView(true));
+btnList.addEventListener("click",()=>setView(false));
+
+/* ---------- Footer ---------- */
+document.getElementById("footer").innerHTML=
+  "NTU Business Solutions · Year 1 Training Schedule, AY 2026/27. "+
+  "Public holidays and recess weeks follow the NTU academic calendar; in-lieu days marked “replacement”. "+
+  "Case type, case number and remarks omitted by design. Times are SGT and subject to change.";
+</script>
+</body>
+</html>
